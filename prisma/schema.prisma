@@ -1,0 +1,385 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+// SQLite pour le développement local
+// Note: L'URL est configurée dans prisma.config.ts (Prisma v7)
+datasource db {
+  provider = "sqlite"
+}
+
+enum ListingCategory {
+  VOITURE
+  MOTO
+  UTILITAIRE
+}
+
+enum ListingStatus {
+  ACTIVE
+  SOLD
+  ARCHIVED
+}
+
+enum ListingMode {
+  SALE
+  RENT
+}
+
+enum BodyType {
+  CITADINE
+  SUV
+  PICKUP
+  CABRIOLET
+  MONOSPACE
+  BERLINE
+  BREAK
+  COUPE
+}
+
+enum Fuel {
+  HYBRID
+  PETROL
+  DIESEL
+  ELECTRIC
+  HYDROGEN
+  LPG
+  CNG
+  ETHANOL
+  OTHER
+}
+
+enum Gearbox {
+  MANUAL
+  AUTOMATIC
+  SEMI_AUTOMATIC
+}
+
+enum ReportStatus {
+  PENDING_PAYMENT
+  PAID_AWAITING_UPLOAD
+  READY
+  FAILED
+}
+
+enum KycStatus {
+  PENDING_REVIEW
+  VERIFIED
+  REJECTED
+}
+
+model User {
+  id              String   @id @default(cuid())
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  email           String   @unique
+  passwordHash    String
+  emailVerifiedAt DateTime?
+
+  phone           String?  @unique
+  phoneVerifiedAt DateTime?
+
+  sessions        UserSession[]
+  emailTokens     EmailVerificationToken[]
+  phoneOtps       PhoneOtp[]
+
+  kyc             UserKyc?
+  stripe          UserStripe?
+
+  listings        Listing[]
+  favorites       Favorite[]
+  savedSearches  SavedSearch[]
+  ratingsGiven    Rating[]    @relation("RatingFrom")
+  ratingsReceived Rating[]    @relation("RatingTo")
+}
+
+model Favorite {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  listingId String
+  listing   Listing  @relation(fields: [listingId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, listingId])
+  @@index([userId])
+  @@index([listingId])
+}
+
+model SavedSearch {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  name      String   // Nom donné par l'utilisateur (ex: "BMW série 3")
+  
+  // Critères de recherche stockés en JSON
+  filters   Json     // { q, category, bodyType, city, minPrice, maxPrice, etc. }
+  
+  // Dernière vérification et nouvelles annonces
+  lastCheckedAt DateTime @default(now())
+  newListingsCount Int    @default(0) // Nombre de nouvelles annonces depuis lastCheckedAt
+
+  @@index([userId])
+  @@index([userId, createdAt])
+}
+
+model Rating {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Qui donne la note
+  fromUserId String
+  fromUser   User     @relation("RatingFrom", fields: [fromUserId], references: [id], onDelete: Cascade)
+
+  // Qui reçoit la note
+  toUserId String
+  toUser   User     @relation("RatingTo", fields: [toUserId], references: [id], onDelete: Cascade)
+
+  // Note sur 5 étoiles
+  stars      Int      // 1-5
+  comment    String?  // Commentaire optionnel
+
+  // Lien vers l'annonce concernée (optionnel)
+  listingId  String?
+  listing    Listing? @relation(fields: [listingId], references: [id], onDelete: SetNull)
+
+  @@unique([fromUserId, toUserId, listingId])
+  @@index([toUserId])
+  @@index([fromUserId])
+  @@index([listingId])
+}
+
+model UserSession {
+  // On stocke un identifiant de session (hash) comme clé primaire
+  id        String   @id
+  createdAt DateTime @default(now())
+  expiresAt DateTime
+
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([expiresAt])
+}
+
+model EmailVerificationToken {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+  expiresAt DateTime
+  tokenHash String   @unique
+
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([expiresAt])
+}
+
+model PhoneOtp {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+  expiresAt DateTime
+
+  phone     String
+  codeHash  String
+  attempts  Int      @default(0)
+
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([phone])
+  @@index([expiresAt])
+}
+
+model UserKyc {
+  id        String    @id @default(cuid())
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+
+  status    KycStatus @default(PENDING_REVIEW)
+  verifiedAt DateTime?
+
+  stripeVerificationSessionId String? @unique
+
+  userId    String    @unique
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([status])
+}
+
+model UserStripe {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  stripeCustomerId       String?  @unique
+  stripeConnectAccountId String?  @unique
+  connectChargesEnabled  Boolean  @default(false)
+  connectPayoutsEnabled  Boolean  @default(false)
+
+  userId    String   @unique
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Listing {
+  id           String          @id @default(cuid())
+  createdAt    DateTime        @default(now())
+  updatedAt    DateTime        @updatedAt
+
+  // Lien vendeur (MVP sans comptes): à conserver pour gérer l’annonce
+  manageToken  String?
+
+  // Nouveau: lien vers le compte vendeur (si utilisé)
+  sellerId     String?
+  seller       User?           @relation(fields: [sellerId], references: [id], onDelete: SetNull)
+
+  title        String
+  description  String
+  category     ListingCategory
+  mode         ListingMode     @default(SALE)
+  price        Int
+  year         Int
+  km           Int
+  city         String
+
+  // VIN + infos décodées (auto-fill)
+  vin            String?
+  bodyType       BodyType?
+  color          String?
+  fuel           Fuel?
+  gearbox        Gearbox?
+  powerKw        Int?
+  seats          Int?
+  hasServiceBook Boolean       @default(false)
+  isNonSmoker    Boolean       @default(false)
+  hasWarranty    Boolean       @default(false)
+  isDamaged      Boolean       @default(false)
+  isSponsored    Boolean       @default(false) // Annonces sponsorisées/partenaires
+  sponsoredUntil DateTime?     // Date d'expiration du sponsoring
+  make           String?
+  model          String?
+  trim           String?
+  bodyClass      String?
+  vehicleType    String?
+  fuelType       String?
+  transmission   String?
+  transmissionSpeeds Int?
+  driveType      String?
+  doors          Int?
+  engineCylinders Int?
+  engineHp       Int?
+  engineModel    String?
+  displacementL  String?
+  plantCountry   String?
+  plantCity      String?
+  manufacturer   String?
+  vinData        Json?
+  vinOptions     Json?
+  sellerOptions  Json?
+  sellerOptionsNote String?
+  vinDecodedAt   DateTime?
+
+  // MVP sans compte: on stocke les coordonnées sur l’annonce
+  contactName  String?
+  contactPhone String?
+  contactEmail String?
+
+  status       ListingStatus   @default(ACTIVE)
+  photos       ListingPhoto[]
+  reports      ListingReport[]
+  kyc             ListingKyc?
+  favorites       Favorite[]
+  ratings         Rating[]
+  contactRequests ContactRequest[]
+
+  @@index([category, price, year, km])
+  @@index([city])
+  @@index([vin])
+  @@index([manageToken])
+  @@index([sellerId])
+  @@index([isSponsored])
+}
+
+model ListingPhoto {
+  id         String   @id @default(cuid())
+  createdAt  DateTime @default(now())
+  url        String
+  order      Int      @default(0)
+
+  listingId  String
+  listing    Listing  @relation(fields: [listingId], references: [id], onDelete: Cascade)
+
+  @@index([listingId])
+}
+
+model ListingReport {
+  id             String       @id @default(cuid())
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+
+  status         ReportStatus @default(PENDING_PAYMENT)
+  provider       String       // ex: "carvertical", "autodna", "carpass", "histovec", "rdw", "manual"
+  country        String?      // BE/FR/NL/LU
+  vin            String?
+
+  amountCents    Int
+  currency       String       @default("eur")
+  stripeSessionId String?     @unique
+
+  reportUrl      String?      // URL vers PDF (ou stockage)
+  reportJson     Json?        // Résumé structuré si dispo
+  errorMessage   String?
+
+  listingId      String
+  listing        Listing      @relation(fields: [listingId], references: [id], onDelete: Cascade)
+
+  @@index([listingId])
+  @@index([status])
+}
+
+model ContactRequest {
+  id         String   @id @default(cuid())
+  createdAt  DateTime @default(now())
+
+  listingId  String
+  listing    Listing  @relation(fields: [listingId], references: [id], onDelete: Cascade)
+  sellerId   String?
+  senderName String
+  senderEmail String
+  message    String
+
+  @@index([listingId])
+  @@index([sellerId])
+}
+
+model ListingKyc {
+  id               String    @id @default(cuid())
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+
+  status           KycStatus @default(PENDING_REVIEW)
+  documentType     String    // "id_card" | "passport"
+
+  idDocPath        String
+  idDocMime        String
+  idDocOriginalName String
+
+  selfiePath       String?
+  selfieMime       String?
+  selfieOriginalName String?
+
+  listingId        String    @unique
+  listing          Listing   @relation(fields: [listingId], references: [id], onDelete: Cascade)
+
+  @@index([status])
+  @@index([listingId])
+}
+
