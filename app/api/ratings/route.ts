@@ -51,7 +51,7 @@ export async function POST(req: Request) {
       fromUserId_toUserId_listingId: {
         fromUserId: user.id,
         toUserId,
-        listingId: listingId || null,
+        listingId: listingId ?? (null as any),
       },
     },
     update: {

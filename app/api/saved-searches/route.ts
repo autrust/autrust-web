@@ -8,7 +8,7 @@ const MAX_SAVED_SEARCHES = 3;
 
 const CreateSavedSearchSchema = z.object({
   name: z.string().min(1).max(100),
-  filters: z.record(z.unknown()),
+  filters: z.record(z.string(), z.union([z.string(), z.array(z.string()), z.undefined()])),
 });
 
 const UpdateSavedSearchSchema = z.object({

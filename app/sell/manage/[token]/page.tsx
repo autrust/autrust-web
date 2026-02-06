@@ -17,7 +17,6 @@ export default async function ManageListingPage({
 
   const listing = await prisma.listing.findFirst({
     where: { manageToken: token },
-    include: { reports: { orderBy: { createdAt: "desc" } } },
     select: {
       id: true,
       sellerId: true,

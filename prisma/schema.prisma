@@ -2,10 +2,10 @@ generator client {
   provider = "prisma-client-js"
 }
 
-// PostgreSQL (production)
+// SQLite pour le développement local
 // Note: L'URL est configurée dans prisma.config.ts (Prisma v7)
 datasource db {
-  provider = "postgresql"
+  provider = "sqlite"
 }
 
 enum ListingCategory {
@@ -360,6 +360,14 @@ model ContactRequest {
 
   @@index([listingId])
   @@index([sellerId])
+}
+
+model SiteFeedback {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+
+  message   String   // Ce qu'on pourrait améliorer
+  email     String?  // Optionnel, pour contacter si besoin
 }
 
 model ListingKyc {

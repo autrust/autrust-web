@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import "./globals.css";
 import { SiteHeader } from "@/app/_components/SiteHeader";
+import { SiteFeedbackForm } from "@/app/_components/SiteFeedbackForm";
 import { getSiteUrl } from "@/lib/siteUrl";
 import { JsonLd } from "@/app/_components/JsonLd";
 
@@ -92,8 +93,19 @@ export default function RootLayout({
         <SiteHeader />
         {children}
         <footer className="border-t border-slate-200/70 bg-white/70 backdrop-blur">
-          <div className="mx-auto max-w-6xl px-6 py-10 text-sm text-slate-600">
-            © 2026 AuTrust — Auto • Moto • Utilitaire
+          <div className="mx-auto max-w-6xl px-6 py-10">
+            <section className="mb-8 rounded-2xl border border-slate-200/70 bg-white/90 p-6">
+              <h3 className="mb-3 text-sm font-medium text-slate-700">
+                Laisser un avis sur AuTrust
+              </h3>
+              <p className="mb-4 text-sm text-slate-600">
+                Qu&apos;est-ce qu&apos;on pourrait améliorer ? Vos idées nous aident à progresser.
+              </p>
+              <SiteFeedbackForm />
+            </section>
+            <div className="text-sm text-slate-600">
+              © 2026 AuTrust — Auto • Moto • Utilitaire
+            </div>
           </div>
         </footer>
       </body>

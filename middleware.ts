@@ -6,7 +6,7 @@ import type { NextRequest } from "next/server";
 const rateLimitMap = new Map<string, { count: number; resetAt: number }>();
 
 function getRateLimitKey(req: NextRequest): string {
-  const ip = req.ip ?? req.headers.get("x-forwarded-for") ?? "unknown";
+  const ip = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ?? req.headers.get("x-real-ip") ?? "unknown";
   const path = req.nextUrl.pathname;
   return `${ip}:${path}`;
 }

@@ -215,40 +215,19 @@ export default async function HomePage() {
 
             <div className="rounded-3xl border border-slate-200/70 bg-white/75 p-6 shadow-sm backdrop-blur">
               <div className="text-sm font-medium text-slate-700">Confiance</div>
-              <div className="mt-4 grid gap-3 sm:grid-cols-2">
-                <div className="rounded-2xl border border-slate-200/70 bg-white/75 p-4">
-                  <div className="flex items-center justify-center">
-                    <Image
-                      src="/trust-annonce-icon-v4.png"
-                      alt="Annonce sécurisée"
-                      width={520}
-                      height={520}
-                      className="h-32 w-auto object-contain"
-                    />
-                  </div>
-                </div>
-                <Link
-                  href="/garages"
-                  className="rounded-2xl border border-slate-200/70 bg-white/75 p-4 hover:border-sky-300 transition"
-                >
-                  <div className="flex items-center justify-center">
-                    <Image
-                      src="/trust-garage-icon-v4.png"
-                      alt="Garage partenaire"
-                      width={520}
-                      height={520}
-                      className="h-32 w-auto object-contain"
-                    />
-                  </div>
-                </Link>
-              </div>
-              <div className="mt-3 text-xs text-slate-500">
-                Annonce validée & sécurisée —{" "}
-                <Link href="/garages" className="text-sky-700 underline hover:text-sky-800">
-                  Garage partenaire certifié
-                </Link>
-                .
-              </div>
+              <Link
+                href="/garages"
+                title="Voir tous les garages partenaires vérifiés"
+                className="mt-4 flex items-center justify-center overflow-hidden rounded-xl"
+              >
+                <Image
+                  src="/badge-garage-partenaire-autrust-v3.png"
+                  alt="Garage Partenaire Autrust — Professionnel certifié"
+                  width={400}
+                  height={400}
+                  className="h-40 w-auto max-w-full object-contain"
+                />
+              </Link>
             </div>
 
             <div className="rounded-3xl border border-slate-200/70 bg-white/75 p-6 shadow-sm backdrop-blur">

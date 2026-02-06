@@ -3,6 +3,7 @@ import { prisma } from "@/lib/db";
 import { redirect } from "next/navigation";
 import Link from "next/link";
 import { SavedSearchClient } from "./SavedSearchClient";
+import type { ListingFilters } from "@/lib/listings";
 
 export default async function RecherchesPage() {
   const user = await getCurrentUser();
@@ -10,10 +11,16 @@ export default async function RecherchesPage() {
     redirect("/login?redirect=/recherches");
   }
 
-  const savedSearches = await prisma.savedSearch.findMany({
+  const savedSearchesRaw = await prisma.savedSearch.findMany({
     where: { userId: user.id },
     orderBy: { createdAt: "desc" },
   });
+
+  // Convertir les recherches avec le bon type pour filters
+  const savedSearches = savedSearchesRaw.map((search) => ({
+    ...search,
+    filters: search.filters as ListingFilters,
+  }));
 
   return (
     <div className="mx-auto max-w-6xl px-6 py-8">

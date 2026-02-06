@@ -12,12 +12,12 @@ export async function SiteHeader() {
       <Link href="/" className="block w-full bg-white">
         <div className="relative h-20 w-full sm:h-28">
           <Image
-            src="/autrust-banner.png"
+            src="/autrust-banner-v5.png"
             alt="Autrust"
             fill
             priority
             sizes="100vw"
-            className="object-cover object-center"
+            className="object-cover object-center w-full"
           />
         </div>
       </Link>
@@ -30,13 +30,15 @@ export async function SiteHeader() {
               className="flex items-center gap-2 rounded-xl px-2 py-1 text-slate-900 hover:bg-slate-50 transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-300/60"
               aria-label="Accueil"
             >
-              <Image
-                src="/logo-autrust.png"
-                alt=""
-                width={120}
-                height={60}
-                className="h-7 w-auto"
-              />
+              <span className="inline-flex items-center">
+                <Image
+                  src="/logo-shield-autrust-v2.png"
+                  alt="Autrust"
+                  width={120}
+                  height={120}
+                  className="h-14 w-auto"
+                />
+              </span>
               <Suspense fallback={<span className="text-xs text-slate-300">...</span>}>
                 <TotalVehiclesCount />
               </Suspense>

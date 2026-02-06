@@ -26,7 +26,7 @@ export async function POST(req: Request) {
   }
 
   // Construire les filtres Prisma à partir des filtres sauvegardés
-  const filters = savedSearch.filters as Record<string, unknown>;
+  const filters = savedSearch.filters as Record<string, string | string[] | undefined>;
   const parsedFilters = parseListingFilters(filters);
 
   const where: Prisma.ListingWhereInput = {
