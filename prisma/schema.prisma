@@ -2,10 +2,10 @@ generator client {
   provider = "prisma-client-js"
 }
 
-// SQLite pour le développement local
+// PostgreSQL (production)
 // Note: L'URL est configurée dans prisma.config.ts (Prisma v7)
 datasource db {
-  provider = "sqlite"
+  provider = "postgresql"
 }
 
 enum ListingCategory {
@@ -264,6 +264,8 @@ model Listing {
   isDamaged      Boolean       @default(false)
   isSponsored    Boolean       @default(false) // Annonces sponsorisées/partenaires
   sponsoredUntil DateTime?     // Date d'expiration du sponsoring
+  hasCarVerticalVerification Boolean @default(false) // Option payante : vérification CarVertical
+  carVerticalPaidAt DateTime?  // Date de paiement de la vérification CarVertical
   make           String?
   model          String?
   trim           String?

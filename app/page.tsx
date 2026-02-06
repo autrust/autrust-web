@@ -14,6 +14,7 @@ import { CAR_BRANDS } from "@/lib/carBrands";
 import { prisma } from "@/lib/db";
 import { toListingCardModelFromDb } from "@/lib/listingsDb";
 import { getCurrentUser } from "@/lib/auth";
+import { TotalVehiclesCount } from "@/app/_components/TotalVehiclesCount";
 
 export const dynamic = "force-dynamic";
 
@@ -103,6 +104,11 @@ export default async function HomePage() {
                 </h1>
                 <p className="mt-4 text-slate-700 max-w-prose">
                   Auto, moto et utilitaire. Filtrez rapidement, comparez, et contactez le vendeur.
+                </p>
+                <p className="mt-2 text-sm text-slate-500">
+                  <Suspense fallback={<span>Chargement...</span>}>
+                    Plus de <TotalVehiclesCount /> disponibles sur la plateforme
+                  </Suspense>
                 </p>
 
             <form action="/listings" method="GET" className="mt-8 grid gap-3 max-w-xl">

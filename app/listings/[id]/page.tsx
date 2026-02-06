@@ -232,6 +232,11 @@ export default async function ListingDetail({
               ✓ Bonne affaire
             </span>
           )}
+          {listing.hasCarVerticalVerification && (
+            <span className="inline-flex items-center gap-1 rounded-full border border-amber-300 bg-amber-50 px-3 py-1 text-sm font-medium text-amber-800">
+              ✓ Vérification CarVertical
+            </span>
+          )}
         </div>
 
         {avgPrice !== null && listing.mode === "SALE" && (
@@ -584,28 +589,95 @@ export default async function ListingDetail({
           </Link>
         </div>
 
-        {listing.reports.some((r) => r.status === "READY" && r.reportUrl) ? (
-          <div className="mt-8 rounded-2xl border border-slate-200/70 bg-white/75 p-5 shadow-sm backdrop-blur">
+        {(() => {
+          const carVerticalReport = listing.reports.find(
+            (r) => r.status === "READY" && r.reportUrl && r.provider.toLowerCase() === "carvertical"
+          );
+          const otherReports = listing.reports.filter(
+            (r) => r.status === "READY" && r.reportUrl && r.provider.toLowerCase() !== "carvertical"
+          );
+
+          return (
+            <>
+              {carVerticalReport ? (
+                <div className="mt-8 rounded-2xl border-2 border-emerald-300/80 bg-emerald-50/75 p-5 shadow-sm backdrop-blur">
+                  <div className="flex items-start gap-3">
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2 text-sm font-semibold text-emerald-900">
+                        <span>✓</span>
+                        <span>Rapport CarVertical disponible</span>
+                      </div>
+                      <div className="mt-2 text-xs text-emerald-800">
+                        Rapport complet d'historique du véhicule vérifié par CarVertical (accidents, kilométrage, entretien, etc.).
+                      </div>
+                      <div className="mt-4">
+                        <a
+                          href={carVerticalReport.reportUrl!}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center gap-2 rounded-xl border-2 border-emerald-400 bg-emerald-600 px-4 py-2 text-sm font-medium text-white hover:bg-emerald-500 transition"
+                        >
+                          <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            fill="none"
+                            viewBox="0 0 24 24"
+                            strokeWidth={2}
+                            stroke="currentColor"
+                            className="h-4 w-4"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5m-13.5-9L12 3m0 0l4.5 4.5M12 3v13.5"
+                            />
+                          </svg>
+                          Télécharger le rapport CarVertical
+                        </a>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              ) : listing.hasCarVerticalVerification ? (
+                <div className="mt-8 rounded-2xl border-2 border-amber-200/80 bg-amber-50/75 p-5 shadow-sm backdrop-blur">
+                  <div className="flex items-start gap-3">
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2 text-sm font-semibold text-amber-900">
+                        <span>✓</span>
+                        <span>Vérification CarVertical demandée</span>
+                      </div>
+                      <div className="mt-2 text-xs text-amber-800">
+                        Le vendeur a demandé une vérification complète de l'historique du véhicule via CarVertical. 
+                        Le rapport sera disponible une fois le paiement effectué et le document uploadé.
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              ) : null}
+
+              {otherReports.length > 0 ? (
+                <div className="mt-8 rounded-2xl border border-slate-200/70 bg-white/75 p-5 shadow-sm backdrop-blur">
             <div className="text-sm font-semibold">Rapport d’historique</div>
             <div className="mt-2 text-sm text-slate-700">
-              Rapport fourni par le vendeur (payé côté vendeur).
+              Rapports fournis par le vendeur.
             </div>
             <div className="mt-3 space-y-2">
-              {listing.reports
-                .filter((r) => r.status === "READY" && r.reportUrl)
-                .slice(0, 3)
-                .map((r) => (
+                    {otherReports.slice(0, 3).map((r) => (
                   <a
                     key={r.id}
-                    href={r.reportUrl!}
-                    className="inline-block text-sm text-sky-700 underline decoration-sky-300"
-                  >
-                    Télécharger le rapport ({r.provider})
-                  </a>
-                ))}
-            </div>
-          </div>
-        ) : null}
+                        href={r.reportUrl!}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-block text-sm text-sky-700 underline decoration-sky-300"
+                      >
+                        Télécharger le rapport ({r.provider})
+                      </a>
+                    ))}
+                  </div>
+                </div>
+              ) : null}
+            </>
+          );
+        })()}
 
         {/* Évaluations du vendeur */}
         {seller && (

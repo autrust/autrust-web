@@ -79,6 +79,7 @@ export function SellForm() {
   const [isNonSmoker, setIsNonSmoker] = useState(false);
   const [hasWarranty, setHasWarranty] = useState(false);
   const [isDamaged, setIsDamaged] = useState(false);
+  const [hasCarVerticalVerification, setHasCarVerticalVerification] = useState(false);
   const [fuelTouched, setFuelTouched] = useState(false);
   const [gearboxTouched, setGearboxTouched] = useState(false);
 
@@ -297,6 +298,7 @@ export function SellForm() {
       isNonSmoker: Boolean(fd.get("isNonSmoker")),
       hasWarranty: Boolean(fd.get("hasWarranty")),
       isDamaged: Boolean(fd.get("isDamaged")),
+      hasCarVerticalVerification: hasCarVerticalVerification,
       title: String(fd.get("title") ?? ""),
       category: String(fd.get("category") ?? ""),
       price: String(fd.get("price") ?? ""),
@@ -712,6 +714,24 @@ export function SellForm() {
             className="h-4 w-4 accent-emerald-600"
           />
           Accidentée / endommagée
+        </label>
+      </div>
+
+      <div className="rounded-2xl border-2 border-amber-200/80 bg-amber-50/75 p-4 shadow-sm backdrop-blur">
+        <label className="flex items-start gap-3 text-sm text-slate-900">
+          <input
+            type="checkbox"
+            checked={hasCarVerticalVerification}
+            onChange={(e) => setHasCarVerticalVerification(e.target.checked)}
+            className="mt-0.5 h-4 w-4 accent-amber-600"
+          />
+          <div className="flex-1">
+            <div className="font-semibold">Vérification CarVertical</div>
+            <div className="mt-1 text-xs text-slate-600">
+              Obtenez un rapport complet d'historique du véhicule (accidents, kilométrage, entretien, etc.) pour rassurer les acheteurs.
+              <span className="ml-1 font-medium text-amber-700">Option payante</span> (facturation à venir).
+            </div>
+          </div>
         </label>
       </div>
 

@@ -18,6 +18,7 @@ import { ModeFilter } from "@/app/_components/ModeFilter";
 import { ActiveFiltersBar } from "@/app/_components/ActiveFiltersBar";
 import { SortButton } from "@/app/_components/SortButton";
 import { Pagination } from "@/app/_components/Pagination";
+import { getTotalVehiclesCount } from "@/app/_components/TotalVehiclesCountNumber";
 
 export const dynamic = "force-dynamic";
 
@@ -210,6 +211,9 @@ export default async function ListingsPage({
       })
     : null;
 
+  // Récupérer le nombre total de véhicules sur la plateforme
+  const totalVehiclesOnPlatform = await getTotalVehiclesCount();
+
   // Titre dynamique selon les filtres
   let pageTitle = "Annonces";
   if (seller) {
@@ -225,7 +229,16 @@ export default async function ListingsPage({
           <div>
             <h1 className="text-3xl font-bold">{pageTitle}</h1>
             <p className="mt-1 text-slate-600">
-              {total} résultat{total > 1 ? "s" : ""}
+              <span className="font-medium text-slate-900">{total.toLocaleString("fr-BE")}</span>{" "}
+              résultat{total > 1 ? "s" : ""} trouvé{total > 1 ? "s" : ""}
+              {totalVehiclesOnPlatform > 0 && total !== totalVehiclesOnPlatform && (
+                <>
+                  {" "}sur{" "}
+                  <span className="font-medium text-slate-700">
+                    {totalVehiclesOnPlatform.toLocaleString("fr-BE")} véhicule{totalVehiclesOnPlatform > 1 ? "s" : ""} disponible{totalVehiclesOnPlatform > 1 ? "s" : ""}
+                  </span>
+                </>
+              )}
               {totalPages > 1 ? ` • page ${currentPage}/${totalPages}` : ""}
               {seller && " (Vente & Location)"}
             </p>

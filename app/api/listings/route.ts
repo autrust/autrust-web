@@ -70,6 +70,7 @@ const CreateListingSchema = z.object({
   isNonSmoker: z.coerce.boolean().optional(),
   hasWarranty: z.coerce.boolean().optional(),
   isDamaged: z.coerce.boolean().optional(),
+  hasCarVerticalVerification: z.coerce.boolean().optional(),
   title: z.string().min(8),
   description: z.string().min(20),
   category: CategorySchema,
@@ -281,6 +282,7 @@ export async function POST(req: Request) {
       isNonSmoker: data.isNonSmoker ?? false,
       hasWarranty: data.hasWarranty ?? false,
       isDamaged: data.isDamaged ?? false,
+      hasCarVerticalVerification: data.hasCarVerticalVerification ?? false,
       sellerOptions: data.sellerOptions
         ? (data.sellerOptions as unknown as Prisma.InputJsonValue)
         : undefined,

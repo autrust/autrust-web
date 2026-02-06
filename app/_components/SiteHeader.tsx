@@ -1,7 +1,9 @@
 import Image from "next/image";
 import Link from "next/link";
+import { Suspense } from "react";
 import { getCurrentUser } from "@/lib/auth";
 import { SavedSearchesIcon } from "./SavedSearchesIcon";
+import { TotalVehiclesCount } from "./TotalVehiclesCount";
 
 export async function SiteHeader() {
   const user = await getCurrentUser();
@@ -35,6 +37,9 @@ export async function SiteHeader() {
                 height={60}
                 className="h-7 w-auto"
               />
+              <Suspense fallback={<span className="text-xs text-slate-300">...</span>}>
+                <TotalVehiclesCount />
+              </Suspense>
             </Link>
 
             <div className="flex items-center justify-center sm:justify-end gap-2">
