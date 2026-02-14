@@ -67,6 +67,11 @@ enum KycStatus {
   REJECTED
 }
 
+enum ProfileType {
+  PARTICULIER
+  CONCESSIONNAIRE
+}
+
 model User {
   id              String   @id @default(cuid())
   createdAt       DateTime @default(now())
@@ -78,6 +83,10 @@ model User {
 
   phone           String?  @unique
   phoneVerifiedAt DateTime?
+
+  profileType     ProfileType? // Choisi après inscription (Particulier / Concessionnaire)
+
+  isBlocked       Boolean  @default(false)
 
   sessions        UserSession[]
   emailTokens     EmailVerificationToken[]
@@ -366,6 +375,7 @@ model SiteFeedback {
   id        String   @id @default(cuid())
   createdAt DateTime @default(now())
 
+  stars     Int      @default(5) // 1-5
   message   String   // Ce qu'on pourrait améliorer
   email     String?  // Optionnel, pour contacter si besoin
 }

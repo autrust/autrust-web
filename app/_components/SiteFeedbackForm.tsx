@@ -1,8 +1,10 @@
 "use client";
 
 import { useState } from "react";
+import { RatingStars } from "./RatingStars";
 
 export function SiteFeedbackForm() {
+  const [stars, setStars] = useState(0);
   const [message, setMessage] = useState("");
   const [email, setEmail] = useState("");
   const [status, setStatus] = useState<"idle" | "loading" | "success" | "error">("idle");
@@ -18,6 +20,7 @@ export function SiteFeedbackForm() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
+          stars,
           message: message.trim(),
           email: email.trim() || undefined,
         }),
@@ -30,6 +33,7 @@ export function SiteFeedbackForm() {
         return;
       }
 
+      setStars(0);
       setMessage("");
       setEmail("");
       setStatus("success");
@@ -49,6 +53,10 @@ export function SiteFeedbackForm() {
 
   return (
     <form onSubmit={handleSubmit} className="space-y-3">
+      <div>
+        <p className="mb-2 text-sm text-slate-600">Notez AuTrust sur 5 étoiles</p>
+        <RatingStars value={stars} onChange={setStars} size="lg" />
+      </div>
       <div>
         <label htmlFor="site-feedback-message" className="sr-only">
           Qu&apos;est-ce qu&apos;on pourrait améliorer ?
@@ -80,7 +88,7 @@ export function SiteFeedbackForm() {
       {errorMsg && <p className="text-sm text-red-600">{errorMsg}</p>}
       <button
         type="submit"
-        disabled={status === "loading" || !message.trim()}
+        disabled={status === "loading" || !message.trim() || stars === 0}
         className="rounded-xl bg-sky-600 px-4 py-2 text-sm font-medium text-white hover:bg-sky-500 disabled:opacity-50"
       >
         {status === "loading" ? "Envoi..." : "Envoyer"}

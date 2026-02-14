@@ -17,15 +17,7 @@
 }
 
 body {
-  /* Fond global (mettre l’image dans /public/fond-autrust.png) */
-  background:
-    linear-gradient(rgba(255, 255, 255, 0.78), rgba(255, 255, 255, 0.78)),
-    url("/fond-autrust.png");
-  background-size: cover;
-  background-position: center;
-  background-repeat: no-repeat;
-  background-attachment: fixed;
-
+  /* Dégradé bleu très léger + effet glow subtil (mettre l’image dans /public/fond-autrust.png) */
   color: var(--foreground);
   font-family: var(--font-sans);
 }

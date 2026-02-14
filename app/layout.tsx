@@ -1,9 +1,8 @@
 import type { Metadata } from "next";
 import "./globals.css";
-import { SiteHeader } from "@/app/_components/SiteHeader";
-import { SiteFeedbackForm } from "@/app/_components/SiteFeedbackForm";
+import { SiteHeader } from "./_components/SiteHeader";
+import { SiteFooter } from "./_components/SiteFooter";
 import { getSiteUrl } from "@/lib/siteUrl";
-import { JsonLd } from "@/app/_components/JsonLd";
 
 const siteUrl = getSiteUrl();
 
@@ -49,36 +48,6 @@ export const metadata: Metadata = {
   alternates: { canonical: siteUrl },
 };
 
-const jsonLdOrganization = {
-  "@context": "https://schema.org",
-  "@type": "Organization",
-  name: "AuTrust",
-  url: siteUrl,
-  description:
-    "Plateforme d'achat, vente et location de véhicules : voitures neuves et d'occasion, motos, utilitaires.",
-  potentialAction: {
-    "@context": "https://schema.org",
-    "@type": "SearchAction",
-    target: { "@context": "https://schema.org", "@type": "EntryPoint", urlTemplate: `${siteUrl}/listings?q={search_term_string}` },
-    "query-input": "required name=search_term_string",
-  },
-};
-
-const jsonLdWebSite = {
-  "@context": "https://schema.org",
-  "@type": "WebSite",
-  name: "AuTrust",
-  url: siteUrl,
-  description: "Voiture neuve et d'occasion — achat et location de véhicules",
-  inLanguage: "fr-BE",
-  potentialAction: {
-    "@context": "https://schema.org",
-    "@type": "SearchAction",
-    target: { "@context": "https://schema.org", "@type": "EntryPoint", urlTemplate: `${siteUrl}/listings?q={search_term_string}` },
-    "query-input": "required name=search_term_string",
-  },
-};
-
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -87,27 +56,18 @@ export default function RootLayout({
   return (
     <html lang="fr">
       <body
-        className="antialiased text-slate-900"
+        className="antialiased text-slate-900 min-h-screen"
+        style={{
+          background: `
+            radial-gradient(ellipse 120% 80% at 50% -20%, rgba(147, 197, 253, 0.5), transparent 55%),
+            linear-gradient(180deg, #bfdbfe 0%, #dbeafe 12%, #eff6ff 28%, #ffffff 45%, #ffffff 100%)
+          `,
+          backgroundAttachment: "fixed",
+        }}
       >
-        <JsonLd data={[jsonLdOrganization, jsonLdWebSite]} />
         <SiteHeader />
         {children}
-        <footer className="border-t border-slate-200/70 bg-white/70 backdrop-blur">
-          <div className="mx-auto max-w-6xl px-6 py-10">
-            <section className="mb-8 rounded-2xl border border-slate-200/70 bg-white/90 p-6">
-              <h3 className="mb-3 text-sm font-medium text-slate-700">
-                Laisser un avis sur AuTrust
-              </h3>
-              <p className="mb-4 text-sm text-slate-600">
-                Qu&apos;est-ce qu&apos;on pourrait améliorer ? Vos idées nous aident à progresser.
-              </p>
-              <SiteFeedbackForm />
-            </section>
-            <div className="text-sm text-slate-600">
-              © 2026 AuTrust — Auto • Moto • Utilitaire
-            </div>
-          </div>
-        </footer>
+        <SiteFooter />
       </body>
     </html>
   );

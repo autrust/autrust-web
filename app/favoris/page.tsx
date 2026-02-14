@@ -7,7 +7,7 @@ import { redirect } from "next/navigation";
 export default async function FavorisPage() {
   const user = await getCurrentUser();
   if (!user) {
-    redirect("/login?redirect=/favoris");
+    redirect("/auth?next=/favoris");
   }
 
   const favorites = await prisma.favorite.findMany({

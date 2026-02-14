@@ -13,8 +13,7 @@ import { FinancingCalculator } from "@/app/_components/FinancingCalculator";
 import { SimilarListings } from "@/app/_components/SimilarListings";
 import { ContactSellerForm } from "@/app/_components/ContactSellerForm";
 import { toListingCardModelFromDb } from "@/lib/listingsDb";
-import { getSiteUrl } from "@/lib/siteUrl";
-import { JsonLd } from "@/app/_components/JsonLd";
+import { computeTrustScore } from "@/lib/trustScore";
 
 export const dynamic = "force-dynamic";
 
@@ -103,6 +102,24 @@ export default async function ListingDetail({
     !!seller && Boolean(seller.emailVerifiedAt) && Boolean(seller.phoneVerifiedAt) && seller.kyc?.status === "VERIFIED";
   const sellerDepositReady = sellerOk && Boolean(seller?.stripe?.connectPayoutsEnabled);
 
+  // Score de confiance vendeur (si vendeur connecté)
+  let trustScore: { total: number; breakdown: { identite: number; historique: number; avis: number; compteAncien: number } } | null = null;
+  if (seller) {
+    const [listingsCount, ratingsAgg] = await Promise.all([
+      prisma.listing.count({ where: { sellerId: seller.id } }),
+      prisma.rating.aggregate({
+        where: { toUserId: seller.id },
+        _avg: { stars: true },
+        _count: { id: true },
+      }),
+    ]);
+    trustScore = computeTrustScore(seller, {
+      listingsCount,
+      ratingsAverage: ratingsAgg._avg.stars ?? 0,
+      ratingsCount: ratingsAgg._count.id,
+    });
+  }
+
   const userFavorites = currentUser
     ? await prisma.favorite
         .findMany({
@@ -160,53 +177,8 @@ export default async function ListingDetail({
   const isGoodDeal =
     avgPrice !== null && listing.price < avgPrice * 0.92;
 
-  const baseUrl = getSiteUrl();
-  const listingUrl = `${baseUrl}/listings/${listing.id}`;
-  const imageUrl = listing.photos[0]?.url
-    ? (listing.photos[0].url.startsWith("http") ? listing.photos[0].url : `${baseUrl}${listing.photos[0].url}`)
-    : undefined;
-  const jsonLdVehicle: Record<string, any> = {
-    "@context": "https://schema.org",
-    "@type": "Car",
-    name: listing.title,
-    description: listing.description?.slice(0, 500) ?? listing.title,
-    url: listingUrl,
-    vehicleModelDate: listing.year,
-    vehicleCondition: "https://schema.org/UsedCondition",
-    offers: {
-      "@context": "https://schema.org",
-      "@type": "Offer",
-      price: listing.price,
-      priceCurrency: "EUR",
-      availability: "https://schema.org/InStock",
-      url: listingUrl,
-    },
-  };
-  
-  if (imageUrl) {
-    jsonLdVehicle.image = imageUrl;
-  }
-  
-  if (listing.make) {
-    jsonLdVehicle.brand = {
-      "@context": "https://schema.org",
-      "@type": "Brand",
-      name: listing.make,
-    };
-  }
-  
-  if (listing.km) {
-    jsonLdVehicle.mileageFromOdometer = {
-      "@context": "https://schema.org",
-      "@type": "QuantitativeValue",
-      value: listing.km,
-      unitCode: "KMT",
-    };
-  }
-
   return (
     <main className="px-6 py-10">
-      <JsonLd data={jsonLdVehicle} />
       <RecentlyViewedTracker listingId={listing.id} />
       <div className="mx-auto max-w-3xl">
         <div className="flex flex-wrap items-center justify-between gap-2">
@@ -330,6 +302,47 @@ export default async function ListingDetail({
           ) : null}
         </div>
 
+        {trustScore ? (
+          <div className="mt-4 rounded-2xl border border-slate-200/70 bg-white/75 p-4 shadow-sm backdrop-blur">
+            <div className="text-sm font-semibold text-slate-900">
+              Score AuTrust : {trustScore.total}/100
+            </div>
+            <div className="mt-2 grid gap-1.5 text-xs text-slate-600 sm:grid-cols-2">
+              <span>Identité vérifiée : {trustScore.breakdown.identite}/25</span>
+              <span>Historique : {trustScore.breakdown.historique}/25</span>
+              <span>Avis : {trustScore.breakdown.avis}/25</span>
+              <span>Compte ancien : {trustScore.breakdown.compteAncien}/25</span>
+            </div>
+          </div>
+        ) : null}
+
+        <div className="mt-4 rounded-2xl border border-slate-200/70 bg-slate-50/80 p-5 shadow-sm">
+          <h3 className="text-sm font-semibold text-slate-900">
+            Vérification CarVertical
+          </h3>
+          <p className="mt-2 text-sm text-slate-700 leading-relaxed">
+            CarVertical est une plateforme qui te permet de vérifier l’historique d’un véhicule à partir de son VIN (numéro d’identification) afin d’éviter les mauvaises affaires. Elle collecte des données de plus de 900 sources (bases gouvernementales, assurances, contrôles techniques, etc.) pour donner un rapport complet sur la vie passée d’une voiture ou moto comme : dommages subis, kilométrage réel, vols déclarés, historique d’immatriculation — tout ça avant d’acheter ou de vendre un véhicule.
+          </p>
+          <div className="mt-3 flex flex-wrap gap-4">
+            <a
+              href="https://www.carvertical.com/be/fr"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-sm font-medium text-sky-600 hover:text-sky-700 underline"
+            >
+              En savoir plus sur CarVertical (version FR) →
+            </a>
+            <a
+              href="https://youtu.be/LBaaF2YA1bY"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-sm font-medium text-sky-600 hover:text-sky-700 underline"
+            >
+              Vidéo explicative →
+            </a>
+          </div>
+        </div>
+
         {currentUser ? (
           buyerOk ? (
             sellerDepositReady ? (
@@ -351,7 +364,7 @@ export default async function ListingDetail({
         ) : (
           <div className="mt-4 rounded-2xl border border-slate-200/70 bg-white/70 p-5 text-sm text-slate-700">
             Pour payer un acompte,{" "}
-            <Link className="text-sky-700 underline" href="/login">
+            <Link className="text-sky-700 underline" href={`/auth?next=${encodeURIComponent(`/listings/${listing.id}`)}`}>
               connecte-toi
             </Link>
             .

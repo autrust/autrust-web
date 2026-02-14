@@ -3,12 +3,19 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 
-export function LoginForm() {
+type LoginFormProps = {
+  /** URL de redirection après connexion (ex. /sell). Doit commencer par /. */
+  redirectTo?: string;
+};
+
+export function LoginForm({ redirectTo = "/account" }: LoginFormProps) {
   const router = useRouter();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  const safeRedirect = redirectTo.startsWith("/") && !redirectTo.startsWith("//") ? redirectTo : "/account";
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
@@ -27,7 +34,7 @@ export function LoginForm() {
       return;
     }
 
-    router.push("/account");
+    router.push(safeRedirect);
     router.refresh();
   }
 

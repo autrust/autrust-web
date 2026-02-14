@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Image from "next/image";
 
 export function DepositClient({ listingId }: { listingId: string }) {
   const [amount, setAmount] = useState("500");
@@ -35,9 +36,20 @@ export function DepositClient({ listingId }: { listingId: string }) {
 
   return (
     <div className="mt-4 rounded-2xl border border-slate-200/70 bg-white/75 p-5 shadow-sm backdrop-blur">
-      <div className="text-sm font-semibold text-slate-900">Payer un acompte</div>
-      <div className="mt-1 text-sm text-slate-600">
-        Paiement sécurisé via Stripe (carte ou IBAN SEPA si disponible).
+      <div className="flex flex-wrap items-center gap-4">
+        <Image
+          src="/acompte-securise-logo.png"
+          alt="Acompte sécurisé"
+          width={120}
+          height={120}
+          className="h-16 w-auto object-contain"
+        />
+        <div>
+          <div className="text-sm font-semibold text-slate-900">Payer un acompte</div>
+          <div className="mt-0.5 text-sm text-slate-600">
+            Paiement sécurisé via Stripe (carte ou IBAN SEPA si disponible).
+          </div>
+        </div>
       </div>
       <div className="mt-4 flex flex-col gap-3 sm:flex-row sm:items-end">
         <div className="flex-1">

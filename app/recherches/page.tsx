@@ -8,7 +8,7 @@ import type { ListingFilters } from "@/lib/listings";
 export default async function RecherchesPage() {
   const user = await getCurrentUser();
   if (!user) {
-    redirect("/login?redirect=/recherches");
+    redirect("/auth?next=/recherches");
   }
 
   const savedSearchesRaw = await prisma.savedSearch.findMany({

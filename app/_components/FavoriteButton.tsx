@@ -28,7 +28,7 @@ export function FavoriteButton({
 
       if (res.status === 401) {
         // Non connecté, rediriger vers login
-        router.push(`/login?redirect=${encodeURIComponent(window.location.pathname)}`);
+        router.push(`/auth?next=${encodeURIComponent(window.location.pathname)}`);
         return;
       }
 

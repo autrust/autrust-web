@@ -13,7 +13,7 @@ export default async function ManageListingPage({
 }) {
   const { token } = await params;
   const user = await getCurrentUser();
-  if (!user) redirect("/login");
+  if (!user) redirect(`/auth?next=${encodeURIComponent(`/sell/manage/${token}`)}`);
 
   const listing = await prisma.listing.findFirst({
     where: { manageToken: token },

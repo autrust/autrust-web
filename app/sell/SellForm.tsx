@@ -717,21 +717,37 @@ export function SellForm() {
         </label>
       </div>
 
-      <div className="rounded-2xl border-2 border-amber-200/80 bg-amber-50/75 p-4 shadow-sm backdrop-blur">
-        <label className="flex items-start gap-3 text-sm text-slate-900">
+      <div className="rounded-2xl border-2 border-amber-200/80 bg-amber-50/75 p-5 shadow-sm backdrop-blur">
+        <h3 className="text-sm font-semibold text-slate-900">Certificat CarVertical</h3>
+        <p className="mt-2 text-xs text-slate-700 leading-relaxed">
+          CarVertical vérifie l’historique du véhicule via le VIN (plus de 900 sources : dommages, kilométrage réel, vols, immatriculations). Tu peux obtenir un rapport sur leur site puis l’associer à ton annonce pour rassurer les acheteurs.
+        </p>
+        <div className="mt-3 flex flex-wrap gap-4">
+          <a
+            href="https://www.carvertical.com/be/fr"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-xs font-medium text-sky-600 hover:text-sky-700 underline"
+          >
+            Obtenir un rapport CarVertical (FR) →
+          </a>
+          <a
+            href="https://youtu.be/LBaaF2YA1bY"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-xs font-medium text-sky-600 hover:text-sky-700 underline"
+          >
+            Vidéo explicative →
+          </a>
+        </div>
+        <label className="mt-4 flex items-center gap-3 text-sm text-slate-900">
           <input
             type="checkbox"
             checked={hasCarVerticalVerification}
             onChange={(e) => setHasCarVerticalVerification(e.target.checked)}
-            className="mt-0.5 h-4 w-4 accent-amber-600"
+            className="h-4 w-4 accent-amber-600"
           />
-          <div className="flex-1">
-            <div className="font-semibold">Vérification CarVertical</div>
-            <div className="mt-1 text-xs text-slate-600">
-              Obtenez un rapport complet d'historique du véhicule (accidents, kilométrage, entretien, etc.) pour rassurer les acheteurs.
-              <span className="ml-1 font-medium text-amber-700">Option payante</span> (facturation à venir).
-            </div>
-          </div>
+          <span>Mon véhicule a un rapport / une vérification CarVertical (je l’ajouterai après publication si besoin)</span>
         </label>
       </div>
 

@@ -1,7 +1,7 @@
 import Link from "next/link";
 import Image from "next/image";
 import { redirect } from "next/navigation";
-import { getCurrentUser } from "@/lib/auth";
+import { getCurrentUser, isAdmin } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { PhoneVerificationClient } from "@/app/account/PhoneVerificationClient";
 import { KycStartClient } from "@/app/account/KycStartClient";
@@ -17,13 +17,13 @@ export const metadata = {
 
 export default async function AccountPage() {
   const user = await getCurrentUser();
-  if (!user) redirect("/login");
+  if (!user) redirect("/auth?next=/account");
 
   const dbUser = await prisma.user.findUnique({
     where: { id: user.id },
     include: { kyc: true, stripe: true },
   });
-  if (!dbUser) redirect("/login");
+  if (!dbUser) redirect("/auth?next=/account");
 
   const myListings = await prisma.listing.findMany({
     where: { sellerId: user.id },
@@ -44,80 +44,84 @@ export default async function AccountPage() {
         <p className="mt-2 text-slate-600">{dbUser.email}</p>
 
         <div className="mt-6 rounded-3xl border border-slate-200/70 bg-white/75 p-6 shadow-sm backdrop-blur">
-          <div className="text-lg font-semibold">Statut</div>
-          <div className="mt-3 grid gap-3 sm:grid-cols-2">
-            <div className="rounded-2xl border border-slate-200 bg-white/80 p-4">
-              <div className="text-xs text-slate-500">Email</div>
-              <div className="mt-1 font-medium text-slate-900">
-                {emailOk ? "Validé" : "Non validé"}
-              </div>
-              {!emailOk ? (
-                <div className="mt-2 text-sm text-slate-600">
-                  <div>Clique sur le lien de validation (en dev: visible dans les logs).</div>
-                  <form action="/api/auth/email/resend" method="POST" className="mt-3">
-                    <button
-                      type="submit"
-                      className="rounded-xl bg-sky-600 px-4 py-2 text-sm font-medium text-white hover:bg-sky-500"
-                    >
-                      Renvoyer le lien
-                    </button>
-                  </form>
+          {!isAdmin(user) && (
+            <>
+              <div className="text-lg font-semibold">Statut</div>
+              <div className="mt-3 grid gap-3 sm:grid-cols-2">
+                <div className="rounded-2xl border border-slate-200 bg-white/80 p-4">
+                  <div className="text-xs text-slate-500">Email</div>
+                  <div className="mt-1 font-medium text-slate-900">
+                    {emailOk ? "Validé" : "Non validé"}
+                  </div>
+                  {!emailOk ? (
+                    <div className="mt-2 text-sm text-slate-600">
+                      <div>Clique sur le lien de validation (en dev: visible dans les logs).</div>
+                      <form action="/api/auth/email/resend" method="POST" className="mt-3">
+                        <button
+                          type="submit"
+                          className="rounded-xl bg-sky-600 px-4 py-2 text-sm font-medium text-white hover:bg-sky-500"
+                        >
+                          Renvoyer le lien
+                        </button>
+                      </form>
+                    </div>
+                  ) : null}
                 </div>
-              ) : null}
-            </div>
 
-            <div className="rounded-2xl border border-slate-200 bg-white/80 p-4">
-              <div className="text-xs text-slate-500">Téléphone</div>
-              <div className="mt-1 font-medium text-slate-900">
-                {phoneOk ? "Vérifié" : "Non vérifié"}
-              </div>
-              {!phoneOk ? <PhoneVerificationClient /> : null}
-            </div>
-          </div>
-
-          <div className="mt-3 grid gap-3 sm:grid-cols-2">
-            <div className="rounded-2xl border border-slate-200 bg-white/80 p-4">
-              <div className="text-xs text-slate-500">KYC</div>
-              <div className="mt-1 font-medium text-slate-900">
-                {dbUser.kyc?.status === "VERIFIED"
-                  ? "Vérifié"
-                  : dbUser.kyc?.status === "REJECTED"
-                    ? "Refusé"
-                    : dbUser.kyc?.status === "PENDING_REVIEW"
-                      ? "En cours"
-                      : "Non démarré"}
-              </div>
-              {dbUser.kyc?.status === "VERIFIED" ? (
-                <div className="mt-2 text-sm text-slate-600">OK pour vendre et payer un acompte.</div>
-              ) : (
-                <div className="mt-2 text-sm text-slate-600">
-                  Requis pour vendre et payer un acompte.
-                  <KycStartClient />
+                <div className="rounded-2xl border border-slate-200 bg-white/80 p-4">
+                  <div className="text-xs text-slate-500">Téléphone</div>
+                  <div className="mt-1 font-medium text-slate-900">
+                    {phoneOk ? "Vérifié" : "Non vérifié"}
+                  </div>
+                  {!phoneOk ? <PhoneVerificationClient /> : null}
                 </div>
-              )}
-            </div>
-
-            <div className="rounded-2xl border border-slate-200 bg-white/80 p-4">
-              <div className="text-xs text-slate-500">IBAN (paiements)</div>
-              <div className="mt-1 font-medium text-slate-900">
-                {dbUser.stripe?.connectPayoutsEnabled
-                  ? "Actif (paiements activés)"
-                  : dbUser.stripe?.stripeConnectAccountId
-                    ? "En cours (à compléter)"
-                    : "Non configuré"}
               </div>
-              {dbUser.stripe?.connectPayoutsEnabled ? (
-                <div className="mt-2 text-sm text-slate-600">OK pour recevoir des acomptes.</div>
-              ) : (
-                <div className="mt-2 text-sm text-slate-600">
-                  Requis pour recevoir des acomptes.
-                  <ConnectStartClient />
-                </div>
-              )}
-            </div>
-          </div>
 
-          <div className="mt-4 flex flex-wrap gap-3">
+              <div className="mt-3 grid gap-3 sm:grid-cols-2">
+                <div className="rounded-2xl border border-slate-200 bg-white/80 p-4">
+                  <div className="text-xs text-slate-500">KYC</div>
+                  <div className="mt-1 font-medium text-slate-900">
+                    {dbUser.kyc?.status === "VERIFIED"
+                      ? "Vérifié"
+                      : dbUser.kyc?.status === "REJECTED"
+                        ? "Refusé"
+                        : dbUser.kyc?.status === "PENDING_REVIEW"
+                          ? "En cours"
+                          : "Non démarré"}
+                  </div>
+                  {dbUser.kyc?.status === "VERIFIED" ? (
+                    <div className="mt-2 text-sm text-slate-600">OK pour vendre et payer un acompte.</div>
+                  ) : (
+                    <div className="mt-2 text-sm text-slate-600">
+                      Requis pour vendre et payer un acompte.
+                      <KycStartClient />
+                    </div>
+                  )}
+                </div>
+
+                <div className="rounded-2xl border border-slate-200 bg-white/80 p-4">
+                  <div className="text-xs text-slate-500">IBAN (paiements)</div>
+                  <div className="mt-1 font-medium text-slate-900">
+                    {dbUser.stripe?.connectPayoutsEnabled
+                      ? "Actif (paiements activés)"
+                      : dbUser.stripe?.stripeConnectAccountId
+                        ? "En cours (à compléter)"
+                        : "Non configuré"}
+                  </div>
+                  {dbUser.stripe?.connectPayoutsEnabled ? (
+                    <div className="mt-2 text-sm text-slate-600">OK pour recevoir des acomptes.</div>
+                  ) : (
+                    <div className="mt-2 text-sm text-slate-600">
+                      Requis pour recevoir des acomptes.
+                      <ConnectStartClient />
+                    </div>
+                  )}
+                </div>
+              </div>
+            </>
+          )}
+
+          <div className={`flex flex-wrap gap-3 ${!isAdmin(user) ? "mt-4" : ""}`}>
             <Link
               href="/sell"
               className="rounded-xl bg-emerald-600 px-4 py-2 font-medium text-white hover:bg-emerald-500"
@@ -129,6 +133,18 @@ export default async function AccountPage() {
               className="rounded-xl border border-sky-200 bg-sky-50 px-4 py-2 font-medium text-sky-800 hover:bg-sky-100"
             >
               Mes annonces {myListings.length > 0 ? `(${myListings.length})` : ""}
+            </Link>
+            <Link
+              href="/admin/feedback"
+              className="rounded-xl border border-slate-200 bg-white/80 px-4 py-2 font-medium text-slate-800 hover:bg-slate-50"
+            >
+              Avis site
+            </Link>
+            <Link
+              href="/admin/users"
+              className="rounded-xl border border-slate-200 bg-white/80 px-4 py-2 font-medium text-slate-800 hover:bg-slate-50"
+            >
+              Utilisateurs
             </Link>
             <form action="/api/auth/logout" method="POST">
               <button

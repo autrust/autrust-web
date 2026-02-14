@@ -80,6 +80,7 @@ export async function getCurrentUser(): Promise<AuthUser | null> {
           emailVerifiedAt: true,
           phone: true,
           phoneVerifiedAt: true,
+          isBlocked: true,
         },
       },
     },
@@ -91,7 +92,15 @@ export async function getCurrentUser(): Promise<AuthUser | null> {
     return null;
   }
 
-  return session.user;
+  if (session.user.isBlocked) {
+    await prisma.userSession.deleteMany({ where: { id: tokenHash } });
+    const c = await cookies();
+    c.set(SESSION_COOKIE, "", { httpOnly: true, path: "/", expires: new Date(0) });
+    return null;
+  }
+
+  const { isBlocked: _, ...user } = session.user;
+  return user;
 }
 
 export async function requireUser(): Promise<AuthUser> {
@@ -101,6 +110,13 @@ export async function requireUser(): Promise<AuthUser> {
     throw new Error("UNAUTHORIZED");
   }
   return user;
+}
+
+/** Retourne true si l'utilisateur est admin (email dans ADMIN_EMAILS). Bypass KYC, email, téléphone. */
+export function isAdmin(user: AuthUser | null): boolean {
+  if (!user) return false;
+  const admins = process.env.ADMIN_EMAILS?.split(",").map((e) => e.trim().toLowerCase()) ?? [];
+  return admins.includes(user.email.toLowerCase());
 }
 
 export function constantTimeEquals(a: string, b: string) {

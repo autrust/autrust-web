@@ -3,6 +3,7 @@ import Link from "next/link";
 import { Suspense } from "react";
 import { getCurrentUser } from "@/lib/auth";
 import { SavedSearchesIcon } from "./SavedSearchesIcon";
+import { SiteMenu } from "./SiteMenu";
 import { TotalVehiclesCount } from "./TotalVehiclesCount";
 
 export async function SiteHeader() {
@@ -23,13 +24,18 @@ export async function SiteHeader() {
       </Link>
 
       <div className="border-t border-slate-200/70 bg-white/80 backdrop-blur">
-        <div className="mx-auto max-w-6xl px-6 py-3">
+        <div className="mx-auto max-w-6xl px-6 py-2">
+          <p className="text-center text-xs text-slate-500 mb-2">
+            Vérifié • Sécurisé • Certifié
+          </p>
           <nav className="flex items-center justify-between gap-2 text-sm">
-            <Link
-              href="/"
-              className="flex items-center gap-2 rounded-xl px-2 py-1 text-slate-900 hover:bg-slate-50 transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-300/60"
-              aria-label="Accueil"
-            >
+            <div className="flex items-center gap-1">
+              <SiteMenu />
+              <Link
+                href="/"
+                className="flex items-center gap-2 rounded-xl px-2 py-1 text-slate-900 hover:bg-slate-50 transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-300/60"
+                aria-label="Accueil"
+              >
               <span className="inline-flex items-center">
                 <Image
                   src="/logo-shield-autrust-v2.png"
@@ -43,6 +49,7 @@ export async function SiteHeader() {
                 <TotalVehiclesCount />
               </Suspense>
             </Link>
+            </div>
 
             <div className="flex items-center justify-center sm:justify-end gap-2">
             <Link
@@ -87,10 +94,18 @@ export async function SiteHeader() {
                 >
                   Mon compte
                 </Link>
+                <form action="/api/auth/logout" method="POST" className="inline">
+                  <button
+                    type="submit"
+                    className="rounded-xl border border-slate-200 bg-white px-3 py-2 font-medium text-slate-600 hover:bg-slate-50 hover:text-slate-800 transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-300/60"
+                  >
+                    Se déconnecter
+                  </button>
+                </form>
               </>
             ) : (
               <Link
-                href="/login"
+                href="/auth"
                 className="rounded-xl border border-slate-200 bg-white px-3 py-2 font-medium text-slate-800 hover:bg-slate-50 transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-300/60"
               >
                 Connexion
