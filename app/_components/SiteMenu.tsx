@@ -2,8 +2,10 @@
 
 import Link from "next/link";
 import { useRef, useEffect, useState } from "react";
+import type { Locale } from "@/lib/locale";
+import { LanguageSwitcher } from "./LanguageSwitcher";
 
-const menuLinks = [
+const defaultMenuLinks: { href: string; label: string }[] = [
   { href: "/", label: "Accueil" },
   { href: "/#comment-ca-marche", label: "Comment ça marche" },
   { href: "/pourquoi-autrust", label: "Pourquoi AuTrust" },
@@ -15,7 +17,15 @@ const menuLinks = [
   { href: "/sell", label: "Déposer une annonce" },
 ];
 
-export function SiteMenu() {
+export function SiteMenu({
+  menuLinks = defaultMenuLinks,
+  openMenuAria = "Ouvrir le menu",
+  currentLocale,
+}: {
+  menuLinks?: { href: string; label: string }[];
+  openMenuAria?: string;
+  currentLocale?: Locale;
+}) {
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
 
@@ -42,7 +52,7 @@ export function SiteMenu() {
         type="button"
         onClick={() => setOpen((o) => !o)}
         className="flex items-center justify-center rounded-lg p-2 text-slate-500 hover:bg-slate-100 hover:text-slate-700 transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-300/60"
-        aria-label="Ouvrir le menu"
+        aria-label={openMenuAria}
         aria-expanded={open}
       >
         <svg
@@ -77,6 +87,11 @@ export function SiteMenu() {
               {label}
             </Link>
           ))}
+          {currentLocale != null && (
+            <div className="mt-2 border-t border-slate-100 px-3 py-2">
+              <LanguageSwitcher currentLocale={currentLocale} />
+            </div>
+          )}
         </nav>
       )}
     </div>

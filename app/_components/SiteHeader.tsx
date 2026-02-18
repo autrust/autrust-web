@@ -2,12 +2,15 @@ import Image from "next/image";
 import Link from "next/link";
 import { Suspense } from "react";
 import { getCurrentUser } from "@/lib/auth";
+import type { Locale } from "@/lib/locale";
+import { getTranslations } from "@/lib/translations";
 import { SavedSearchesIcon } from "./SavedSearchesIcon";
 import { SiteMenu } from "./SiteMenu";
 import { TotalVehiclesCount } from "./TotalVehiclesCount";
 
-export async function SiteHeader() {
+export async function SiteHeader({ locale }: { locale: Locale }) {
   const user = await getCurrentUser();
+  const t = getTranslations(locale);
   return (
     <header className="sticky top-0 z-10 border-b border-slate-200/70 bg-white/75 backdrop-blur">
       <Link href="/" className="block w-full bg-white">
@@ -26,15 +29,29 @@ export async function SiteHeader() {
       <div className="border-t border-slate-200/70 bg-white/80 backdrop-blur">
         <div className="mx-auto max-w-6xl px-6 py-2">
           <p className="text-center text-xs text-slate-500 mb-2">
-            Vérifié • Sécurisé • Certifié
+            {t.common.verifiedSecureCertified}
           </p>
           <nav className="flex items-center justify-between gap-2 text-sm">
             <div className="flex items-center gap-1">
-              <SiteMenu />
+              <SiteMenu
+                menuLinks={[
+                  { href: "/", label: t.menu.home },
+                  { href: "/#comment-ca-marche", label: t.menu.howItWorks },
+                  { href: "/pourquoi-autrust", label: t.menu.whyAuTrust },
+                  { href: "/securite-verification", label: t.menu.securityVerification },
+                  { href: "/tarifs", label: t.common.pricing },
+                  { href: "/listings", label: t.common.buy },
+                  { href: "/location", label: t.common.rent },
+                  { href: "/garages", label: t.menu.garages },
+                  { href: "/sell", label: t.common.postAd },
+                ]}
+                openMenuAria={t.menu.openMenu}
+                currentLocale={locale}
+              />
               <Link
                 href="/"
                 className="flex items-center gap-2 rounded-xl px-2 py-1 text-slate-900 hover:bg-slate-50 transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-300/60"
-                aria-label="Accueil"
+                aria-label={t.header.homeAria}
               >
               <span className="inline-flex items-center">
                 <Image
@@ -56,21 +73,21 @@ export async function SiteHeader() {
               href="/listings"
               className="rounded-xl px-3 py-2 text-sky-700 hover:bg-sky-50/80 hover:text-sky-800 transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-300/60"
             >
-              Achat
+              {t.common.buy}
             </Link>
             <Link
               href="/location"
               className="rounded-xl px-3 py-2 text-sky-700 hover:bg-sky-50/80 hover:text-sky-800 transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-300/60"
             >
-              Location
+              {t.common.rent}
             </Link>
             {user ? (
               <>
                 <Link
                   href="/favoris"
                   className="flex items-center justify-center rounded-xl border border-slate-200 bg-white p-2.5 text-red-500 hover:bg-red-50 hover:border-red-200 transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-300/60"
-                  aria-label="Mes favoris"
-                  title="Mes favoris"
+                  aria-label={t.common.favorites}
+                  title={t.common.favorites}
                 >
                   <svg
                     xmlns="http://www.w3.org/2000/svg"
@@ -92,14 +109,14 @@ export async function SiteHeader() {
                   href="/account"
                   className="rounded-xl border border-slate-200 bg-white px-3 py-2 font-medium text-slate-800 hover:bg-slate-50 transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-300/60"
                 >
-                  Mon compte
+                  {t.common.myAccount}
                 </Link>
                 <form action="/api/auth/logout" method="POST" className="inline">
                   <button
                     type="submit"
                     className="rounded-xl border border-slate-200 bg-white px-3 py-2 font-medium text-slate-600 hover:bg-slate-50 hover:text-slate-800 transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-300/60"
                   >
-                    Se déconnecter
+                    {t.common.logout}
                   </button>
                 </form>
               </>
@@ -108,14 +125,14 @@ export async function SiteHeader() {
                 href="/auth"
                 className="rounded-xl border border-slate-200 bg-white px-3 py-2 font-medium text-slate-800 hover:bg-slate-50 transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-300/60"
               >
-                Connexion
+                {t.common.login}
               </Link>
             )}
             <Link
               href="/sell"
               className="rounded-xl bg-emerald-600 px-3 py-2 font-medium text-white hover:bg-emerald-500 transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-300/60"
             >
-              Déposer une annonce
+              {t.common.postAd}
             </Link>
             </div>
           </nav>

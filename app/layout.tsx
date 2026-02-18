@@ -1,8 +1,10 @@
 import type { Metadata } from "next";
+import { cookies } from "next/headers";
 import "./globals.css";
 import { SiteHeader } from "./_components/SiteHeader";
 import { SiteFooter } from "./_components/SiteFooter";
 import { getSiteUrl } from "@/lib/siteUrl";
+import { getLocaleFromCookie, LOCALE_COOKIE } from "@/lib/locale";
 
 const siteUrl = getSiteUrl();
 
@@ -48,13 +50,16 @@ export const metadata: Metadata = {
   alternates: { canonical: siteUrl },
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const c = await cookies();
+  const locale = getLocaleFromCookie(c.get(LOCALE_COOKIE)?.value);
+
   return (
-    <html lang="fr">
+    <html lang={locale}>
       <body
         className="antialiased text-slate-900 min-h-screen"
         style={{
@@ -65,9 +70,9 @@ export default function RootLayout({
           backgroundAttachment: "fixed",
         }}
       >
-        <SiteHeader />
+        <SiteHeader locale={locale} />
         {children}
-        <SiteFooter />
+        <SiteFooter locale={locale} />
       </body>
     </html>
   );

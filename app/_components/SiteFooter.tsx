@@ -1,13 +1,17 @@
 import Link from "next/link";
+import type { Locale } from "@/lib/locale";
+import { getTranslations } from "@/lib/translations";
+import { LanguageSwitcher } from "./LanguageSwitcher";
 import { ScrollToTop } from "./ScrollToTop";
 
-export function SiteFooter() {
+export function SiteFooter({ locale }: { locale: Locale }) {
+  const t = getTranslations(locale);
   return (
     <footer className="border-t border-slate-200 bg-slate-50/90">
       <div className="mx-auto max-w-6xl px-6 py-10">
         {/* Intro */}
         <p className="text-base font-semibold text-slate-900 mb-8">
-          AuTrust : la plateforme de confiance pour acheter et vendre des véhicules en Belgique.
+          {t.footer.intro}
         </p>
 
         {/* Columns + Contact & Haut */}
@@ -16,41 +20,41 @@ export function SiteFooter() {
             {/* AuTrust */}
             <nav className="flex flex-col">
               <h3 className="text-sm font-semibold text-slate-900 uppercase tracking-wider mb-4">
-                AuTrust
+                {t.footer.autrust}
               </h3>
               <ul className="space-y-2.5 text-sm text-slate-600">
-                <li><Link href="/pourquoi-autrust" className="hover:text-slate-900 underline underline-offset-2">À propos d'AuTrust</Link></li>
-                <li><Link href="/pourquoi-autrust" className="hover:text-slate-900 underline underline-offset-2">Presse</Link></li>
-                <li><Link href="/conditions-generales" className="hover:text-slate-900 underline underline-offset-2">Conditions d'utilisation</Link></li>
-                <li><Link href="/mentions-legales" className="hover:text-slate-900 underline underline-offset-2">Informations légales</Link></li>
-                <li><Link href="/confidentialite" className="hover:text-slate-900 underline underline-offset-2">Protection des données</Link></li>
-                <li><Link href="/accessibilite" className="hover:text-slate-900 underline underline-offset-2">Déclaration d'accessibilité</Link></li>
+                <li><Link href="/pourquoi-autrust" className="hover:text-slate-900 underline underline-offset-2">{t.footer.about}</Link></li>
+                <li><Link href="/pourquoi-autrust" className="hover:text-slate-900 underline underline-offset-2">{t.footer.press}</Link></li>
+                <li><Link href="/conditions-generales" className="hover:text-slate-900 underline underline-offset-2">{t.footer.terms}</Link></li>
+                <li><Link href="/mentions-legales" className="hover:text-slate-900 underline underline-offset-2">{t.footer.legal}</Link></li>
+                <li><Link href="/confidentialite" className="hover:text-slate-900 underline underline-offset-2">{t.footer.privacy}</Link></li>
+                <li><Link href="/accessibilite" className="hover:text-slate-900 underline underline-offset-2">{t.footer.accessibility}</Link></li>
               </ul>
             </nav>
 
             {/* Service */}
             <nav className="flex flex-col">
               <h3 className="text-sm font-semibold text-slate-900 uppercase tracking-wider mb-4">
-                Service
+                {t.footer.service}
               </h3>
               <ul className="space-y-2.5 text-sm text-slate-600">
-                <li><Link href="/contact" className="hover:text-slate-900 underline underline-offset-2">Contact et aide</Link></li>
-                <li><Link href="/listings" className="hover:text-slate-900 underline underline-offset-2">Annonces par marque</Link></li>
-                <li><Link href="/listings" className="hover:text-slate-900 underline underline-offset-2">Annonces par région</Link></li>
+                <li><Link href="/contact" className="hover:text-slate-900 underline underline-offset-2">{t.footer.contactHelp}</Link></li>
+                <li><Link href="/listings" className="hover:text-slate-900 underline underline-offset-2">{t.footer.listingsByBrand}</Link></li>
+                <li><Link href="/listings" className="hover:text-slate-900 underline underline-offset-2">{t.footer.listingsByRegion}</Link></li>
               </ul>
             </nav>
 
             {/* Espace Pro */}
             <nav className="flex flex-col">
               <h3 className="text-sm font-semibold text-slate-900 uppercase tracking-wider mb-4">
-                Espace Pro
+                {t.footer.proSpace}
               </h3>
               <ul className="space-y-2.5 text-sm text-slate-600">
-                <li><Link href="/tarifs" className="hover:text-slate-900 underline underline-offset-2">Tarifs</Link></li>
-                <li><Link href="/auth" className="hover:text-slate-900 underline underline-offset-2">Connexion</Link></li>
-                <li><Link href="/auth" className="hover:text-slate-900 underline underline-offset-2">Inscription</Link></li>
-                <li><Link href="/comment-ca-marche" className="hover:text-slate-900 underline underline-offset-2">Aide et Information</Link></li>
-                <li><Link href="/contact" className="hover:text-slate-900 underline underline-offset-2">Contact</Link></li>
+                <li><Link href="/tarifs" className="hover:text-slate-900 underline underline-offset-2">{t.common.pricing}</Link></li>
+                <li><Link href="/auth" className="hover:text-slate-900 underline underline-offset-2">{t.common.login}</Link></li>
+                <li><Link href="/auth" className="hover:text-slate-900 underline underline-offset-2">{t.common.signup}</Link></li>
+                <li><Link href="/comment-ca-marche" className="hover:text-slate-900 underline underline-offset-2">{t.footer.helpInfo}</Link></li>
+                <li><Link href="/contact" className="hover:text-slate-900 underline underline-offset-2">{t.common.contact}</Link></li>
               </ul>
             </nav>
           </div>
@@ -63,11 +67,11 @@ export function SiteFooter() {
         {/* Contact + Apps + Social */}
         <div className="mt-10 pt-8 border-t border-slate-200 flex flex-col sm:flex-row sm:items-start sm:justify-between gap-8">
           <div>
-            <h3 className="text-sm font-semibold text-slate-900 mb-3">Contact</h3>
+            <h3 className="text-sm font-semibold text-slate-900 mb-3">{t.common.contact}</h3>
             <p className="text-sm text-slate-600">
-              <Link href="/contact" className="hover:text-slate-900 underline underline-offset-2">Nous contacter</Link>
+              <Link href="/contact" className="hover:text-slate-900 underline underline-offset-2">{t.footer.contactUs}</Link>
               {" · "}
-              <Link href="/comment-ca-marche" className="hover:text-slate-900 underline underline-offset-2">Comment ça marche</Link>
+              <Link href="/comment-ca-marche" className="hover:text-slate-900 underline underline-offset-2">{t.footer.howItWorks}</Link>
             </p>
             {/* Social */}
             <div className="mt-4 flex items-center gap-3">
@@ -86,19 +90,22 @@ export function SiteFooter() {
             </div>
           </div>
 
-          {/* Country */}
-          <div className="flex items-center gap-2">
-            <span className="text-sm text-slate-600">Région :</span>
-            <span className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-900">
-              Belgique
-            </span>
+          {/* Country + Language */}
+          <div className="flex flex-wrap items-center gap-4">
+            <div className="flex items-center gap-2">
+              <span className="text-sm text-slate-600">{t.common.region} :</span>
+              <span className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-900">
+                {t.common.belgium}
+              </span>
+            </div>
+            <LanguageSwitcher currentLocale={locale} />
           </div>
         </div>
 
         {/* Copyright */}
         <div className="mt-10 pt-6 border-t border-slate-200 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 text-sm text-slate-600">
-          <p>© 2026 AuTrust. Tous droits réservés.</p>
-          <p className="text-slate-500">AuTrust — Auto • Moto • Utilitaire. Vérifié • Sécurisé • Certifié.</p>
+          <p>{t.footer.copyright}</p>
+          <p className="text-slate-500">{t.footer.tagline}</p>
         </div>
       </div>
     </footer>

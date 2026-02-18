@@ -1,6 +1,7 @@
 import Link from "next/link";
 import Image from "next/image";
 import { Suspense } from "react";
+import { cookies } from "next/headers";
 import { SponsoredCarousel } from "@/app/_components/SponsoredCarousel";
 import { ListingCardWithFavorite } from "@/app/_components/ListingCardWithFavorite";
 import { RecentlyViewedList } from "@/app/_components/RecentlyViewedList";
@@ -14,6 +15,8 @@ import { CAR_BRANDS } from "@/lib/carBrands";
 import { prisma } from "@/lib/db";
 import { toListingCardModelFromDb } from "@/lib/listingsDb";
 import { getCurrentUser } from "@/lib/auth";
+import { getLocaleFromCookie, LOCALE_COOKIE } from "@/lib/locale";
+import { getTranslations } from "@/lib/translations";
 import { TotalVehiclesCount } from "@/app/_components/TotalVehiclesCount";
 
 export const dynamic = "force-dynamic";
@@ -30,6 +33,10 @@ export const metadata = {
 };
 
 export default async function HomePage() {
+  const c = await cookies();
+  const locale = getLocaleFromCookie(c.get(LOCALE_COOKIE)?.value);
+  const t = getTranslations(locale);
+
   // Récupérer les annonces sponsorisées en premier (non expirées)
   const now = new Date();
   const sponsored = await prisma.listing
@@ -112,15 +119,15 @@ export default async function HomePage() {
                       textShadow: "0 0 60px rgba(59,130,246,0.35), 0 0 30px rgba(59,130,246,0.2)",
                     }}
                   >
-                    Achetez et vendez en toute confiance.
+                    {t.home.heroTitle}
                   </h1>
                   <p className="mt-3 text-slate-700 text-lg">
-                    La nouvelle norme du marché automobile.
+                    {t.home.heroSubtitle}
                   </p>
                 </div>
                 <p className="mt-4 text-sm text-slate-500">
-                  <Suspense fallback={<span>Chargement...</span>}>
-                    Plus de <TotalVehiclesCount /> disponibles sur la plateforme
+                  <Suspense fallback={<span>{t.common.loading}</span>}>
+                    {t.home.moreThanPrefix}<TotalVehiclesCount /> {t.home.vehiclesAvailable}
                   </Suspense>
                 </p>
 
@@ -128,7 +135,7 @@ export default async function HomePage() {
               <div className="grid gap-3 sm:grid-cols-3">
                 <input
                   name="q"
-                  placeholder="Ex: Golf, MT-07, utilitaire..."
+                  placeholder={t.home.searchPlaceholder}
                   className="w-full rounded-xl border border-slate-200 bg-white/85 px-4 py-3 text-slate-900 placeholder:text-slate-400 shadow-sm backdrop-blur focus:outline-none focus:ring-2 focus:ring-sky-300/60 focus:border-sky-300 sm:col-span-2"
                 />
                 <select
@@ -136,10 +143,10 @@ export default async function HomePage() {
                   defaultValue=""
                   className="w-full rounded-xl border border-slate-200 bg-white/85 px-4 py-3 text-slate-900 shadow-sm backdrop-blur focus:outline-none focus:ring-2 focus:ring-sky-300/60 focus:border-sky-300"
                 >
-                  <option value="">Toutes catégories</option>
-                  {CATEGORY_OPTIONS.map((c) => (
-                    <option key={c.slug} value={c.slug}>
-                      {c.label}
+                  <option value="">{t.common.allCategories}</option>
+                  {CATEGORY_OPTIONS.map((cat) => (
+                    <option key={cat.slug} value={cat.slug}>
+                      {locale === "en" ? (cat.slug === "auto" ? t.listing.categoryAuto : cat.slug === "moto" ? t.listing.categoryMoto : t.listing.categoryUtilitaire) : cat.label}
                     </option>
                   ))}
                 </select>
@@ -151,7 +158,7 @@ export default async function HomePage() {
                   defaultValue=""
                   className="w-full rounded-xl border border-slate-200 bg-white/85 px-4 py-3 text-slate-900 shadow-sm backdrop-blur focus:outline-none focus:ring-2 focus:ring-sky-300/60 focus:border-sky-300"
                 >
-                  <option value="">Tous types</option>
+                  <option value="">{t.common.allTypes}</option>
                   {BODY_TYPE_OPTIONS.map((b) => (
                     <option key={b.slug} value={b.slug}>
                       {b.label}
@@ -160,14 +167,14 @@ export default async function HomePage() {
                 </select>
                 <input
                   name="city"
-                  placeholder="Ville (ex: Bruxelles)"
+                  placeholder={t.home.cityPlaceholder}
                   className="w-full rounded-xl border border-slate-200 bg-white/85 px-4 py-3 text-slate-900 placeholder:text-slate-400 shadow-sm backdrop-blur focus:outline-none focus:ring-2 focus:ring-sky-300/60 focus:border-sky-300 sm:col-span-1"
                 />
                 <button
                   type="submit"
                   className="rounded-xl bg-sky-600 px-5 py-3 font-medium text-white hover:bg-sky-500 transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-300/60 sm:col-span-1"
                 >
-                  Rechercher
+                  {t.common.search}
                 </button>
               </div>
             </form>
@@ -177,26 +184,26 @@ export default async function HomePage() {
                 href="/sell"
                 className="rounded-xl border border-emerald-200/80 bg-white/75 px-4 py-2 text-sm font-medium text-emerald-700 hover:border-emerald-300 hover:bg-emerald-50/70 transition backdrop-blur"
               >
-                Déposer une annonce
+                {t.home.postAd}
               </Link>
               <Link
                 href="/listings"
                 className="rounded-xl border border-sky-200/80 bg-white/75 px-4 py-2 text-sm font-medium text-sky-700 hover:border-sky-300 hover:bg-sky-50/70 transition backdrop-blur"
               >
-                Voir toutes les annonces
+                {t.home.viewAllListings}
               </Link>
               <Link
                 href="/location"
                 className="rounded-xl border border-emerald-200/80 bg-white/75 px-4 py-2 text-sm font-medium text-emerald-700 hover:border-emerald-300 hover:bg-emerald-50/70 transition backdrop-blur"
               >
-                Location
+                {t.common.rent}
               </Link>
             </div>
           </div>
 
           <div className="grid gap-4">
             <div className="rounded-3xl border border-slate-200/70 bg-white/75 p-6 shadow-sm backdrop-blur">
-              <div className="text-sm font-medium text-slate-700">Catégories</div>
+              <div className="text-sm font-medium text-slate-700">{t.home.categories}</div>
               <div className="mt-4 grid gap-3 sm:grid-cols-3">
                 {CATEGORY_OPTIONS.map((c) => (
                   <Link
@@ -269,7 +276,7 @@ export default async function HomePage() {
               </div>
 
               <div className="mt-6 text-xs text-slate-500">
-                Astuce: combine “carrosserie” + “ville” pour aller vite.
+                {t.home.tipSearch}
               </div>
             </div>
           </div>
@@ -290,13 +297,13 @@ export default async function HomePage() {
         <section className="mt-14">
           <div className="flex items-end justify-between gap-4">
             <div>
-              <h2 className="text-2xl font-bold">Marques populaires</h2>
+              <h2 className="text-2xl font-bold">{t.home.popularBrands}</h2>
               <p className="mt-1 text-sm text-slate-600">
-                Cliquez sur une marque pour voir tous les véhicules disponibles
+                {t.home.popularBrandsDesc}
               </p>
             </div>
             <Link href="/listings" className="text-sm text-sky-700 underline decoration-sky-300">
-              Tout voir
+              {t.common.viewAll}
             </Link>
           </div>
 
@@ -316,9 +323,9 @@ export default async function HomePage() {
         {/* Section principale avec le reste du contenu */}
         <section className="mt-14">
           <div className="flex items-end justify-between gap-4">
-            <h2 className="text-2xl font-bold">Annonces à la une</h2>
+            <h2 className="text-2xl font-bold">{t.home.featuredListings}</h2>
             <Link href="/listings" className="text-sm text-sky-700 underline decoration-sky-300">
-              Tout voir
+              {t.common.viewAll}
             </Link>
           </div>
 
@@ -339,10 +346,10 @@ export default async function HomePage() {
 
         <div className="mt-14 rounded-2xl border border-slate-200/70 bg-slate-50/80 p-5 shadow-sm">
           <h3 className="text-sm font-semibold text-slate-900">
-            Vérification CarVertical
+            {t.home.carVerticalTitle}
           </h3>
           <p className="mt-2 text-sm text-slate-700 leading-relaxed">
-            CarVertical est une plateforme qui te permet de vérifier l’historique d’un véhicule à partir de son VIN (numéro d’identification) afin d’éviter les mauvaises affaires. Elle collecte des données de plus de 900 sources (bases gouvernementales, assurances, contrôles techniques, etc.) pour donner un rapport complet sur la vie passée d’une voiture ou moto comme : dommages subis, kilométrage réel, vols déclarés, historique d’immatriculation — tout ça avant d’acheter ou de vendre un véhicule.
+            {t.home.carVerticalText}
           </p>
           <div className="mt-3 flex flex-wrap gap-4">
             <a
@@ -351,7 +358,7 @@ export default async function HomePage() {
               rel="noopener noreferrer"
               className="text-sm font-medium text-sky-600 hover:text-sky-700 underline"
             >
-              En savoir plus sur CarVertical (version FR) →
+              {t.home.carVerticalLink}
             </a>
             <a
               href="https://youtu.be/LBaaF2YA1bY"
@@ -359,7 +366,7 @@ export default async function HomePage() {
               rel="noopener noreferrer"
               className="text-sm font-medium text-sky-600 hover:text-sky-700 underline"
             >
-              Vidéo explicative →
+              {t.home.carVerticalVideo}
             </a>
           </div>
         </div>
@@ -369,30 +376,26 @@ export default async function HomePage() {
           <div className="rounded-3xl border border-slate-200 bg-white/70 backdrop-blur-md p-8 sm:p-12 shadow-sm">
             <div className="inline-flex items-center gap-2 rounded-full border border-slate-200 px-3 py-1 text-sm text-slate-700">
               <span className="h-2 w-2 rounded-full bg-emerald-500" />
-              Transparence • Sécurité • Confiance
+              {t.home.howItWorksBadge}
             </div>
             <h2 className="mt-5 text-3xl sm:text-4xl font-semibold tracking-tight text-slate-900">
-              Comment fonctionne AuTrust ?
+              {t.home.howItWorksTitle}
             </h2>
             <p className="mt-4 max-w-2xl text-base sm:text-lg text-slate-600">
-              Achetez et vendez en toute confiance, en{" "}
-              <span className="font-medium text-slate-900">4 étapes simples</span>.
-              AuTrust protège les acheteurs et réduit les fraudes grâce à la
-              vérification des vendeurs, l'acompte sécurisé et la transparence des
-              informations.
+              {t.home.howItWorksIntro}
             </p>
             <div className="mt-8 flex flex-wrap gap-2">
               <span className="inline-flex items-center rounded-full border border-slate-200 bg-white px-3 py-1 text-sm text-slate-700">
-                Vendeurs vérifiés
+                {t.home.verifiedSellers}
               </span>
               <span className="inline-flex items-center rounded-full border border-slate-200 bg-white px-3 py-1 text-sm text-slate-700">
-                Acompte sécurisé
+                {t.home.secureDeposit}
               </span>
               <span className="inline-flex items-center rounded-full border border-slate-200 bg-white px-3 py-1 text-sm text-slate-700">
-                VIN & transparence
+                {t.home.vinTransparency}
               </span>
               <span className="inline-flex items-center rounded-full border border-slate-200 bg-white px-3 py-1 text-sm text-slate-700">
-                Garages partenaires
+                {t.home.partnerGarages}
               </span>
             </div>
           </div>
@@ -401,43 +404,40 @@ export default async function HomePage() {
             <div className="rounded-3xl border border-slate-200 bg-white p-6 sm:p-8 shadow-sm">
               <div className="flex items-start justify-between gap-4">
                 <div>
-                  <h3 className="text-2xl font-semibold text-slate-900">Pour les vendeurs</h3>
-                  <p className="mt-1 text-slate-600">Publiez plus vite, avec plus de confiance.</p>
+                  <h3 className="text-2xl font-semibold text-slate-900">{t.home.forSellers}</h3>
+                  <p className="mt-1 text-slate-600">{t.home.forSellersDesc}</p>
                 </div>
                 <span className="shrink-0 rounded-full bg-sky-600/10 text-sky-700 border border-sky-200 px-3 py-1 text-sm font-medium">
-                  Vendeur
+                  {t.home.seller}
                 </span>
               </div>
               <div className="mt-6 space-y-4">
-                <HomeStep n="1" title="Créez votre compte" text="Inscription obligatoire pour publier. AuTrust vérifie chaque vendeur pour garantir un environnement fiable." />
-                <HomeStep n="2" title="Publiez votre véhicule" text="Ajoutez infos, photos et VIN. Vous pouvez activer l'option historique véhicule si disponible." />
-                <HomeStep n="3" title="Recevez des acheteurs qualifiés" text="Les acheteurs peuvent réserver via acompte sécurisé pour limiter les demandes non sérieuses." />
-                <HomeStep n="4" title="Finalisez en toute sécurité" text="L'acompte est protégé jusqu'à validation de la transaction. Support AuTrust en cas de souci." />
+                <HomeStep n="1" title={t.home.step1SellerTitle} text={t.home.step1SellerText} />
+                <HomeStep n="2" title={t.home.step2SellerTitle} text={t.home.step2SellerText} />
+                <HomeStep n="3" title={t.home.step3SellerTitle} text={t.home.step3SellerText} />
+                <HomeStep n="4" title={t.home.step4SellerTitle} text={t.home.step4SellerText} />
               </div>
             </div>
 
             <div className="rounded-3xl border border-slate-200 bg-white p-6 sm:p-8 shadow-sm">
               <div className="flex items-start justify-between gap-4">
                 <div>
-                  <h3 className="text-2xl font-semibold text-slate-900">Pour les acheteurs</h3>
-                  <p className="mt-1 text-slate-600">Achetez sereinement, avec des preuves.</p>
+                  <h3 className="text-2xl font-semibold text-slate-900">{t.home.forBuyers}</h3>
+                  <p className="mt-1 text-slate-600">{t.home.forBuyersDesc}</p>
                 </div>
                 <span className="shrink-0 rounded-full bg-sky-600/10 text-sky-700 border border-sky-200 px-3 py-1 text-sm font-medium">
-                  Acheteur
+                  {t.home.buyer}
                 </span>
               </div>
               <div className="mt-6 space-y-4">
-                <HomeStep n="1" title="Trouvez un véhicule" text="Filtrez, comparez, et repérez les badges de confiance sur les annonces." />
-                <HomeStep n="2" title="Vérifiez l'historique" text="Consultez le rapport véhicule lorsqu'il est proposé (VIN, événements, cohérence des infos)." />
-                <HomeStep n="3" title="Réservez via acompte sécurisé" text="Bloquez le véhicule en versant un acompte protégé. Plus de sécurité, moins d'arnaques." />
-                <HomeStep n="4" title="Finalisez sans stress" text="Rendez-vous, contrôle, paiement final. AuTrust peut assister en cas de litige." />
+                <HomeStep n="1" title={t.home.step1BuyerTitle} text={t.home.step1BuyerText} />
+                <HomeStep n="2" title={t.home.step2BuyerTitle} text={t.home.step2BuyerText} />
+                <HomeStep n="3" title={t.home.step3BuyerTitle} text={t.home.step3BuyerText} />
+                <HomeStep n="4" title={t.home.step4BuyerTitle} text={t.home.step4BuyerText} />
               </div>
               <div className="mt-6 rounded-2xl border border-emerald-200/80 bg-emerald-50/60 p-4 text-sm text-slate-700">
-                <p className="font-medium text-slate-900">Astuce AuTrust</p>
-                <p className="mt-1">
-                  Privilégiez les annonces <span className="font-medium">Vendeur vérifié</span> et{" "}
-                  <span className="font-medium">Garage partenaire</span> pour une expérience encore plus fiable.
-                </p>
+                <p className="font-medium text-slate-900">{t.home.tipTitle}</p>
+                <p className="mt-1">{t.home.tipText}</p>
               </div>
             </div>
           </div>
@@ -445,10 +445,10 @@ export default async function HomePage() {
           <div className="mt-10 rounded-3xl border border-slate-200 bg-white p-6 sm:p-8 shadow-sm flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
             <div>
               <h3 className="text-xl font-semibold text-slate-900">
-                Prêt à passer à la nouvelle norme du marché automobile ?
+                {t.home.ctaTitle}
               </h3>
               <p className="mt-1 text-slate-600">
-                Rejoignez AuTrust et profitez d'une marketplace plus sûre.
+                {t.home.ctaSubtitle}
               </p>
             </div>
             <div className="flex gap-3">
@@ -456,13 +456,13 @@ export default async function HomePage() {
                 href="/auth"
                 className="inline-flex items-center justify-center rounded-xl border border-slate-200 px-5 py-3 font-medium text-slate-900 hover:bg-slate-50 transition"
               >
-                Créer un compte
+                {t.home.createAccount}
               </Link>
               <Link
                 href="/sell"
                 className="inline-flex items-center justify-center rounded-xl bg-slate-900 px-5 py-3 text-white font-medium hover:bg-slate-800 transition"
               >
-                Je suis le vendeur
+                {t.home.iAmSeller}
               </Link>
             </div>
           </div>
