@@ -5,14 +5,14 @@ import { getAppUrl, getStripeServer } from "@/lib/stripe";
 
 const CheckoutSchema = z.object({
   manageToken: z.string().min(10),
-  duration: z.enum(["7", "20", "30"]), // Durée en jours
+  duration: z.enum(["7", "30", "48h"]), // 7j, 30j, ou Boost express 48h
 });
 
-// Prix selon la durée
-const SPONSOR_PRICES: Record<string, number> = {
-  "7": 800,   // 8€ pour 7 jours
-  "20": 1500, // 15€ pour 20 jours
-  "30": 2000, // 20€ pour 30 jours
+// Prix selon la durée (particuliers / options premium)
+const SPONSOR_PRICES: Record<string, { cents: number; label: string; description: string }> = {
+  "7": { cents: 999, label: "Top recherche 7 jours", description: "7 jours" },
+  "30": { cents: 1999, label: "Top recherche 30 jours", description: "30 jours" },
+  "48h": { cents: 499, label: "Boost express 48 h", description: "48 heures" },
 };
 
 const SPONSOR_CURRENCY = "eur";
@@ -47,16 +47,13 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "ALREADY_SPONSORED" }, { status: 400 });
   }
 
-  const priceCents = SPONSOR_PRICES[duration];
-  if (!priceCents) {
+  const priceConfig = SPONSOR_PRICES[duration];
+  if (!priceConfig) {
     return NextResponse.json({ error: "INVALID_DURATION" }, { status: 400 });
   }
 
   const stripe = getStripeServer();
   const appUrl = getAppUrl();
-
-  const durationLabel = duration === "7" ? "7 jours" : duration === "20" ? "20 jours" : "30 jours";
-  const priceLabel = duration === "7" ? "8€" : duration === "20" ? "15€" : "20€";
 
   const session = await stripe.checkout.sessions.create({
     mode: "payment",
@@ -65,10 +62,10 @@ export async function POST(req: Request) {
         quantity: 1,
         price_data: {
           currency: SPONSOR_CURRENCY,
-          unit_amount: priceCents,
+          unit_amount: priceConfig.cents,
           product_data: {
-            name: `Mise en avant d'annonce - ${durationLabel}`,
-            description: `Annonce: ${listing.title} (${durationLabel})`,
+            name: `${priceConfig.label} - Annonce`,
+            description: `Annonce: ${listing.title} (${priceConfig.description})`,
           },
         },
       },

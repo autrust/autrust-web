@@ -164,6 +164,10 @@ export type ListingFilters = {
   page?: number;
   perPage?: number;
   radiusKm?: number;
+  /** yes = déjà immatriculé, no = pas encore immatriculé */
+  registered?: "yes" | "no";
+  minRegistrationYear?: number;
+  maxRegistrationYear?: number;
 };
 
 export function categoryFromSlug(slug: string | undefined): VehicleCategory | undefined {
@@ -216,6 +220,13 @@ export function parseListingFilters(searchParams: SearchParams): ListingFilters 
   const radiusKmRaw = toInt(firstString(searchParams.radiusKm));
   const radiusKm = radiusKmRaw !== undefined && [10, 25, 50, 100].includes(radiusKmRaw) ? radiusKmRaw : undefined;
 
+  const registeredRaw = firstString(searchParams.registered)?.trim().toLowerCase();
+  const registered =
+    registeredRaw === "yes" ? "yes" : registeredRaw === "no" ? "no" : undefined;
+
+  const minRegistrationYear = toInt(firstString(searchParams.minRegistrationYear));
+  const maxRegistrationYear = toInt(firstString(searchParams.maxRegistrationYear));
+
   return {
     q: q ? q : undefined,
     categorySlug,
@@ -246,6 +257,9 @@ export function parseListingFilters(searchParams: SearchParams): ListingFilters 
     page,
     perPage,
     radiusKm,
+    registered,
+    minRegistrationYear,
+    maxRegistrationYear,
   };
 }
 

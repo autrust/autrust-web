@@ -13,6 +13,9 @@ export function ActiveFiltersBar() {
   const city = searchParams.get("city");
   const make = searchParams.get("make");
   const radiusKm = searchParams.get("radiusKm");
+  const registered = searchParams.get("registered");
+  const minRegistrationYear = searchParams.get("minRegistrationYear");
+  const maxRegistrationYear = searchParams.get("maxRegistrationYear");
 
   const activeFilters: Array<{ key: string; label: string; value: string }> = [];
 
@@ -46,6 +49,20 @@ export function ActiveFiltersBar() {
 
   if (radiusKm) {
     activeFilters.push({ key: "radiusKm", label: `Rayon ${radiusKm} km`, value: radiusKm });
+  }
+
+  if (registered === "yes") {
+    let label = "Déjà été immatriculé";
+    if (minRegistrationYear || maxRegistrationYear) {
+      const yearRange = [
+        minRegistrationYear || "...",
+        maxRegistrationYear || "...",
+      ].join(" - ");
+      label = `Déjà été immatriculé (${yearRange})`;
+    }
+    activeFilters.push({ key: "registered", label, value: "yes" });
+  } else if (registered === "no") {
+    activeFilters.push({ key: "registered", label: "Pas encore été immatriculé", value: "no" });
   }
 
   if (activeFilters.length === 0) {

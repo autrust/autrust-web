@@ -112,11 +112,38 @@ export async function requireUser(): Promise<AuthUser> {
   return user;
 }
 
-/** Retourne true si l'utilisateur est admin (email dans ADMIN_EMAILS). Bypass KYC, email, téléphone. */
+/** Normalise un numéro pour comparaison (chiffres uniquement, sans préfixe pays). */
+function normalizePhoneForAdmin(phone: string | null): string {
+  if (!phone) return "";
+  const digits = phone.replace(/\D/g, "");
+  // Belgique: 10 chiffres (0xxxxxxxxx) ou 9 sans le 0
+  return digits.length >= 9 ? digits.slice(-9) : digits;
+}
+
+/** Retourne true si l'email de l'utilisateur est dans la liste admin (pour masquer KYC/IBAN sur Mon compte). */
+export function isAdminEmail(user: AuthUser | null): boolean {
+  if (!user) return false;
+  const adminEmails =
+    process.env.ADMIN_EMAILS?.split(",").map((e) => e.trim().toLowerCase()) ?? [];
+  return adminEmails.includes(user.email.toLowerCase());
+}
+
+/** Retourne true si l'utilisateur est admin : email dans ADMIN_EMAILS ET (téléphone vérifié dans ADMIN_PHONES ou ADMIN_SKIP_PHONE_VERIFICATION=true). */
 export function isAdmin(user: AuthUser | null): boolean {
   if (!user) return false;
-  const admins = process.env.ADMIN_EMAILS?.split(",").map((e) => e.trim().toLowerCase()) ?? [];
-  return admins.includes(user.email.toLowerCase());
+  if (!isAdminEmail(user)) return false;
+  // Tant que le site n'est pas en ligne : considérer les emails admin comme vérifiés sans exiger le téléphone
+  if (process.env.ADMIN_SKIP_PHONE_VERIFICATION === "true") return true;
+  const adminPhones =
+    process.env.ADMIN_PHONES?.split(",")
+      .map((p) => normalizePhoneForAdmin(p.trim()))
+      .filter(Boolean) ?? [];
+  const phoneOk =
+    Boolean(user.phoneVerifiedAt) &&
+    user.phone &&
+    adminPhones.length > 0 &&
+    adminPhones.includes(normalizePhoneForAdmin(user.phone));
+  return phoneOk;
 }
 
 export function constantTimeEquals(a: string, b: string) {

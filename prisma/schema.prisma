@@ -72,6 +72,13 @@ enum ProfileType {
   CONCESSIONNAIRE
 }
 
+enum ProfessionalPlan {
+  START
+  PRO
+  ELITE
+  ENTERPRISE
+}
+
 model User {
   id              String   @id @default(cuid())
   createdAt       DateTime @default(now())
@@ -84,7 +91,11 @@ model User {
   phone           String?  @unique
   phoneVerifiedAt DateTime?
 
-  profileType     ProfileType? // Choisi après inscription (Particulier / Concessionnaire)
+  profileType     ProfileType? // Choisi après inscription (Particulier / Professionnel)
+  vatNumber       String?  // Numéro de TVA (pour professionnels)
+  selectedPlan    ProfessionalPlan? // Plan choisi (pour professionnels)
+  maxListings     Int?     // Nombre maximum d'annonces autorisées (selon le pack choisi)
+  pendingPlanChange ProfessionalPlan? // Changement de plan en attente (pour downgrades, appliqué le mois prochain)
 
   isBlocked       Boolean  @default(false)
 
@@ -259,6 +270,9 @@ model Listing {
   km           Int
   city         String
 
+  // Immatriculation : null = pas encore immatriculé, sinon date de 1ère immatriculation
+  firstRegistrationDate DateTime?
+
   // VIN + infos décodées (auto-fill)
   vin            String?
   bodyType       BodyType?
@@ -378,6 +392,46 @@ model SiteFeedback {
   stars     Int      @default(5) // 1-5
   message   String   // Ce qu'on pourrait améliorer
   email     String?  // Optionnel, pour contacter si besoin
+}
+
+model AdminAlert {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+
+  type      String   // ex: "PARTICULIER_TOO_MANY_LISTINGS"
+  userId    String?
+  userEmail String?
+  message   String
+  metadata  Json?    // { listingCount, limit, etc. }
+
+  @@index([type])
+  @@index([createdAt])
+}
+
+model SponsorPayment {
+  id           String   @id @default(cuid())
+  createdAt    DateTime @default(now())
+  listingId    String
+  amountCents  Int
+  duration     String   // "7" | "30" | "48h"
+  stripeSessionId String? @unique
+
+  @@index([listingId])
+  @@index([createdAt])
+}
+
+model DepositPayment {
+  id           String   @id @default(cuid())
+  createdAt    DateTime @default(now())
+  listingId    String
+  buyerId      String
+  sellerId     String
+  amountCents  Int
+  stripeSessionId String? @unique
+
+  @@index([listingId])
+  @@index([createdAt])
+  @@index([sellerId])
 }
 
 model ListingKyc {

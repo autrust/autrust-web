@@ -83,6 +83,10 @@ export function SellForm() {
   const [fuelTouched, setFuelTouched] = useState(false);
   const [gearboxTouched, setGearboxTouched] = useState(false);
 
+  const [hasBeenRegistered, setHasBeenRegistered] = useState<boolean | null>(null);
+  const [firstRegistrationMonth, setFirstRegistrationMonth] = useState("");
+  const [firstRegistrationYear, setFirstRegistrationYear] = useState("");
+
   const [sellerOptions, setSellerOptions] = useState<string[]>([]);
   const [sellerOptionsNote, setSellerOptionsNote] = useState("");
 
@@ -278,6 +282,16 @@ export function SellForm() {
 
   async function onSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
+    if (
+      hasBeenRegistered === true &&
+      (!firstRegistrationMonth || !firstRegistrationYear.trim())
+    ) {
+      setState({
+        status: "error",
+        message: "Indiquez le mois et l'année de première immatriculation.",
+      });
+      return;
+    }
     setState({ status: "submitting" });
 
     const fd = new FormData(e.currentTarget);
@@ -312,6 +326,13 @@ export function SellForm() {
       photoUrls: photoUrls.length ? photoUrls : undefined,
       sellerOptions: sellerOptions.length ? sellerOptions : undefined,
       sellerOptionsNote: sellerOptionsNote.trim() ? sellerOptionsNote.trim() : undefined,
+
+      firstRegistrationDate:
+        hasBeenRegistered === true && firstRegistrationYear && firstRegistrationMonth
+          ? `${firstRegistrationYear}-${String(firstRegistrationMonth).padStart(2, "0")}-01`
+          : hasBeenRegistered === false
+            ? null
+            : undefined,
 
       // infos décodées (optionnel)
       vinDecoded: vinDecoded
@@ -672,6 +693,64 @@ export function SellForm() {
             className="mt-2 w-full rounded-xl border border-slate-200 bg-white/85 px-4 py-3 text-slate-900 placeholder:text-slate-400 shadow-sm focus:outline-none focus:ring-2 focus:ring-sky-300/60 focus:border-sky-300"
           />
         </div>
+      </div>
+
+      <div className="rounded-2xl border border-slate-200 bg-white/75 p-4 shadow-sm">
+        <h3 className="text-sm font-semibold text-slate-900">Immatriculation</h3>
+        <p className="mt-1 text-xs text-slate-600">Le véhicule a-t-il déjà été immatriculé ?</p>
+        <div className="mt-3 flex flex-wrap gap-4">
+          <label className="flex items-center gap-2 text-sm text-slate-800">
+            <input
+              type="radio"
+              name="hasBeenRegistered"
+              checked={hasBeenRegistered === true}
+              onChange={() => setHasBeenRegistered(true)}
+              className="h-4 w-4 accent-sky-600"
+            />
+            Oui, déjà immatriculé
+          </label>
+          <label className="flex items-center gap-2 text-sm text-slate-800">
+            <input
+              type="radio"
+              name="hasBeenRegistered"
+              checked={hasBeenRegistered === false}
+              onChange={() => setHasBeenRegistered(false)}
+              className="h-4 w-4 accent-sky-600"
+            />
+            Non, pas encore été immatriculé
+          </label>
+        </div>
+        {hasBeenRegistered === true && (
+          <div className="mt-4 grid gap-3 sm:grid-cols-2">
+            <div>
+              <label className="text-xs text-slate-600">Mois de première immatriculation</label>
+              <select
+                value={firstRegistrationMonth}
+                onChange={(e) => setFirstRegistrationMonth(e.target.value)}
+                className="mt-1 w-full rounded-xl border border-slate-200 bg-white/85 px-4 py-2.5 text-slate-900 shadow-sm focus:outline-none focus:ring-2 focus:ring-sky-300/60"
+              >
+                <option value="">—</option>
+                {Array.from({ length: 12 }, (_, i) => i + 1).map((m) => (
+                  <option key={m} value={m}>
+                    {new Date(2000, m - 1, 1).toLocaleDateString("fr-BE", { month: "long" })}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div>
+              <label className="text-xs text-slate-600">Année de première immatriculation</label>
+              <input
+                type="number"
+                min="1900"
+                max={new Date().getFullYear() + 1}
+                placeholder="Ex: 2019"
+                value={firstRegistrationYear}
+                onChange={(e) => setFirstRegistrationYear(e.target.value)}
+                className="mt-1 w-full rounded-xl border border-slate-200 bg-white/85 px-4 py-2.5 text-slate-900 placeholder:text-slate-400 shadow-sm focus:outline-none focus:ring-2 focus:ring-sky-300/60"
+              />
+            </div>
+          </div>
+        )}
       </div>
 
       <div className="grid gap-3 md:grid-cols-4">

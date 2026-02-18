@@ -3,9 +3,9 @@
 import { useState } from "react";
 
 const SPONSOR_OPTIONS = [
-  { duration: "7", days: 7, price: 8, priceCents: 800 },
-  { duration: "20", days: 20, price: 15, priceCents: 1500 },
-  { duration: "30", days: 30, price: 20, priceCents: 2000 },
+  { duration: "7", label: "Top recherche 7 jours", days: 7, price: "9,99", priceCents: 999 },
+  { duration: "30", label: "Top recherche 30 jours", days: 30, price: "19,99", priceCents: 1999 },
+  { duration: "48h", label: "Boost express 48 h", days: 0.5, price: "4,99", priceCents: 499 },
 ] as const;
 
 export function SponsorButton({ 
@@ -111,10 +111,12 @@ export function SponsorButton({
           >
             <div className="flex items-center justify-between">
               <div>
-                <div className="font-semibold text-slate-900">{option.days} jours</div>
-                <div className="text-xs text-slate-600">Mise en avant pendant {option.days} jours</div>
+                <div className="font-semibold text-slate-900">{option.label}</div>
+                <div className="text-xs text-slate-600">
+                  {option.duration === "48h" ? "Mise en avant 48 h" : `Mise en avant pendant ${option.days} jours`}
+                </div>
               </div>
-              <div className="text-lg font-bold text-sky-600">{option.price}€</div>
+              <div className="text-lg font-bold text-sky-600">{option.price} €</div>
             </div>
           </button>
         ))}

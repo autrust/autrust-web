@@ -46,6 +46,7 @@ export function SiteFooter() {
                 Espace Pro
               </h3>
               <ul className="space-y-2.5 text-sm text-slate-600">
+                <li><Link href="/tarifs" className="hover:text-slate-900 underline underline-offset-2">Tarifs</Link></li>
                 <li><Link href="/auth" className="hover:text-slate-900 underline underline-offset-2">Connexion</Link></li>
                 <li><Link href="/auth" className="hover:text-slate-900 underline underline-offset-2">Inscription</Link></li>
                 <li><Link href="/comment-ca-marche" className="hover:text-slate-900 underline underline-offset-2">Aide et Information</Link></li>

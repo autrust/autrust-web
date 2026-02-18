@@ -1,13 +1,14 @@
 import Link from "next/link";
 import Image from "next/image";
 import { redirect } from "next/navigation";
-import { getCurrentUser, isAdmin } from "@/lib/auth";
+import { getCurrentUser, isAdmin, isAdminEmail } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { PhoneVerificationClient } from "@/app/account/PhoneVerificationClient";
 import { KycStartClient } from "@/app/account/KycStartClient";
 import { ConnectStartClient } from "@/app/account/ConnectStartClient";
 import { UserRatings } from "@/app/_components/UserRatings";
 import { formatPriceEUR } from "@/lib/listings";
+import { ChangePlanClient } from "@/app/account/ChangePlanClient";
 
 export const dynamic = "force-dynamic";
 
@@ -15,9 +16,14 @@ export const metadata = {
   title: "Mon compte",
 };
 
-export default async function AccountPage() {
+export default async function AccountPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ admin?: string }>;
+}) {
   const user = await getCurrentUser();
   if (!user) redirect("/auth?next=/account");
+  const { admin: adminParam } = await searchParams;
 
   const dbUser = await prisma.user.findUnique({
     where: { id: user.id },
@@ -43,40 +49,48 @@ export default async function AccountPage() {
         <h1 className="text-3xl font-bold">Mon compte</h1>
         <p className="mt-2 text-slate-600">{dbUser.email}</p>
 
+        {isAdminEmail(user) && adminParam === "verify_phone" && !isAdmin(user) && (
+          <div className="mt-4 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+            Pour accéder à l&apos;administration, vérifiez votre numéro de
+            téléphone ci-dessous (il doit être dans la liste des numéros
+            autorisés).
+          </div>
+        )}
+
         <div className="mt-6 rounded-3xl border border-slate-200/70 bg-white/75 p-6 shadow-sm backdrop-blur">
-          {!isAdmin(user) && (
-            <>
-              <div className="text-lg font-semibold">Statut</div>
-              <div className="mt-3 grid gap-3 sm:grid-cols-2">
-                <div className="rounded-2xl border border-slate-200 bg-white/80 p-4">
-                  <div className="text-xs text-slate-500">Email</div>
-                  <div className="mt-1 font-medium text-slate-900">
-                    {emailOk ? "Validé" : "Non validé"}
-                  </div>
-                  {!emailOk ? (
-                    <div className="mt-2 text-sm text-slate-600">
-                      <div>Clique sur le lien de validation (en dev: visible dans les logs).</div>
-                      <form action="/api/auth/email/resend" method="POST" className="mt-3">
-                        <button
-                          type="submit"
-                          className="rounded-xl bg-sky-600 px-4 py-2 text-sm font-medium text-white hover:bg-sky-500"
-                        >
-                          Renvoyer le lien
-                        </button>
-                      </form>
-                    </div>
-                  ) : null}
-                </div>
-
-                <div className="rounded-2xl border border-slate-200 bg-white/80 p-4">
-                  <div className="text-xs text-slate-500">Téléphone</div>
-                  <div className="mt-1 font-medium text-slate-900">
-                    {phoneOk ? "Vérifié" : "Non vérifié"}
-                  </div>
-                  {!phoneOk ? <PhoneVerificationClient /> : null}
-                </div>
+          <div className="text-lg font-semibold">Statut</div>
+          <div className="mt-3 grid gap-3 sm:grid-cols-2">
+            <div className="rounded-2xl border border-slate-200 bg-white/80 p-4">
+              <div className="text-xs text-slate-500">Email</div>
+              <div className="mt-1 font-medium text-slate-900">
+                {emailOk ? "Validé" : "Non validé"}
               </div>
+              {!emailOk && !isAdminEmail(user) ? (
+                <div className="mt-2 text-sm text-slate-600">
+                  <div>Clique sur le lien de validation (en dev: visible dans les logs).</div>
+                  <form action="/api/auth/email/resend" method="POST" className="mt-3">
+                    <button
+                      type="submit"
+                      className="rounded-xl bg-sky-600 px-4 py-2 text-sm font-medium text-white hover:bg-sky-500"
+                    >
+                      Renvoyer le lien
+                    </button>
+                  </form>
+                </div>
+              ) : null}
+            </div>
 
+            <div className="rounded-2xl border border-slate-200 bg-white/80 p-4">
+              <div className="text-xs text-slate-500">Téléphone</div>
+              <div className="mt-1 font-medium text-slate-900">
+                {phoneOk ? "Vérifié" : "Non vérifié"}
+              </div>
+              {!phoneOk && !isAdminEmail(user) ? <PhoneVerificationClient /> : null}
+            </div>
+          </div>
+
+          {!isAdminEmail(user) && (
+            <>
               <div className="mt-3 grid gap-3 sm:grid-cols-2">
                 <div className="rounded-2xl border border-slate-200 bg-white/80 p-4">
                   <div className="text-xs text-slate-500">KYC</div>
@@ -118,6 +132,16 @@ export default async function AccountPage() {
                   )}
                 </div>
               </div>
+
+              {dbUser.profileType === "CONCESSIONNAIRE" && (
+                <div className="mt-3">
+                  <ChangePlanClient
+                    currentPlan={dbUser.selectedPlan as "START" | "PRO" | "ELITE" | "ENTERPRISE" | null}
+                    currentMaxListings={dbUser.maxListings}
+                    pendingPlanChange={dbUser.pendingPlanChange as "START" | "PRO" | "ELITE" | "ENTERPRISE" | null}
+                  />
+                </div>
+              )}
             </>
           )}
 
@@ -134,18 +158,14 @@ export default async function AccountPage() {
             >
               Mes annonces {myListings.length > 0 ? `(${myListings.length})` : ""}
             </Link>
-            <Link
-              href="/admin/feedback"
-              className="rounded-xl border border-slate-200 bg-white/80 px-4 py-2 font-medium text-slate-800 hover:bg-slate-50"
-            >
-              Avis site
-            </Link>
-            <Link
-              href="/admin/users"
-              className="rounded-xl border border-slate-200 bg-white/80 px-4 py-2 font-medium text-slate-800 hover:bg-slate-50"
-            >
-              Utilisateurs
-            </Link>
+            {isAdminEmail(user) && (
+              <Link
+                href="/admin"
+                className="rounded-xl border-2 border-sky-600 bg-sky-600 px-4 py-2 font-medium text-white hover:bg-sky-700"
+              >
+                Administration
+              </Link>
+            )}
             <form action="/api/auth/logout" method="POST">
               <button
                 type="submit"
@@ -157,10 +177,19 @@ export default async function AccountPage() {
           </div>
         </div>
 
-        <div className="mt-6 text-sm text-slate-600">
-          Lecture publique des annonces:{" "}
-          <Link className="text-sky-700 underline" href="/listings">
-            voir les annonces
+        <div className="mt-6 flex flex-wrap items-center gap-3 text-sm text-slate-600">
+          <span>
+            Lecture publique des annonces:{" "}
+            <Link className="text-sky-700 underline" href="/listings">
+              voir les annonces
+            </Link>
+          </span>
+          <span className="text-slate-400">·</span>
+          <Link
+            className="text-sky-700 underline"
+            href="/voir-en-tant-qu-acheteur"
+          >
+            Voir en tant qu&apos;acheteur
           </Link>
         </div>
 

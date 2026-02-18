@@ -12,7 +12,7 @@ export const metadata = {
 export default async function AdminUsersPage() {
   const user = await getCurrentUser();
   if (!user) redirect("/auth?next=/admin/users");
-  if (!isAdmin(user)) redirect("/account");
+  if (!isAdmin(user)) redirect("/account?admin=verify_phone");
 
   const users = await prisma.user.findMany({
     orderBy: { createdAt: "desc" },

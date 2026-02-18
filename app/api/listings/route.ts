@@ -4,7 +4,8 @@ import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/db";
 import { moderateListingInput } from "@/lib/moderation";
 import { randomUUID } from "node:crypto";
-import { getCurrentUser } from "@/lib/auth";
+import { getCurrentUser, isAdmin } from "@/lib/auth";
+import { MAX_LISTINGS_PARTICULIER } from "@/lib/constants";
 
 const CategorySchema = z.enum(["auto", "moto", "utilitaire", "VOITURE", "MOTO", "UTILITAIRE"]);
 const FuelSchema = z.enum([
@@ -85,6 +86,9 @@ const CreateListingSchema = z.object({
   vinDecoded: VinDecodedSchema.optional(),
   sellerOptions: z.array(z.string()).max(80).optional(),
   sellerOptionsNote: z.string().max(2000).optional(),
+  firstRegistrationDate: z
+    .union([z.string().regex(/^\d{4}-\d{2}-\d{2}$/), z.null()])
+    .optional(),
 });
 
 function toDbMode(input: z.infer<typeof ListingModeSchema> | undefined) {
@@ -222,6 +226,35 @@ export async function POST(req: Request) {
     dbUser.kyc?.status === "VERIFIED";
   if (!okToSell) return NextResponse.json({ error: "SELLER_NOT_VERIFIED" }, { status: 403 });
 
+  // Contrôle particuliers : limite d'annonces pour éviter vente "pro" sans numéro de TVA
+  const isParticulier = dbUser.profileType !== "CONCESSIONNAIRE";
+  if (isParticulier && !isAdmin(user)) {
+    const activeCount = await prisma.listing.count({
+      where: {
+        sellerId: user.id,
+        status: "ACTIVE",
+      },
+    });
+    if (activeCount >= MAX_LISTINGS_PARTICULIER) {
+      await prisma.adminAlert.create({
+        data: {
+          type: "PARTICULIER_TOO_MANY_LISTINGS",
+          userId: user.id,
+          userEmail: dbUser.email,
+          message: `Particulier a tenté de dépasser la limite (${activeCount} annonces actives, max ${MAX_LISTINGS_PARTICULIER}). Vérifier si activité pro sans numéro de TVA.`,
+          metadata: { listingCount: activeCount, limit: MAX_LISTINGS_PARTICULIER },
+        },
+      });
+      return NextResponse.json(
+        {
+          error: "PARTICULIER_LISTING_LIMIT",
+          reason: `En tant que particulier, vous ne pouvez pas publier plus de ${MAX_LISTINGS_PARTICULIER} annonces actives. Pour vendre plus de véhicules, passez en compte professionnel (avec numéro de TVA) depuis Mon compte.`,
+        },
+        { status: 403 }
+      );
+    }
+  }
+
   const json = await req.json().catch(() => null);
   const parsed = CreateListingSchema.safeParse(json);
   if (!parsed.success) {
@@ -291,6 +324,10 @@ export async function POST(req: Request) {
       contactPhone: data.contactPhone,
       contactEmail: data.contactEmail ?? dbUser.email,
       vin,
+      firstRegistrationDate:
+        data.firstRegistrationDate != null && data.firstRegistrationDate !== ""
+          ? new Date(data.firstRegistrationDate)
+          : null,
       ...(decoded && decodedMatchesVin
         ? {
             make: decoded.make,

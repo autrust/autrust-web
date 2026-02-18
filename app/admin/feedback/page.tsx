@@ -12,7 +12,7 @@ export const metadata = {
 export default async function AdminFeedbackPage() {
   const user = await getCurrentUser();
   if (!user) redirect("/auth?next=/admin/feedback");
-  if (!isAdmin(user)) redirect("/account");
+  if (!isAdmin(user)) redirect("/account?admin=verify_phone");
 
   const feedbacks = await prisma.siteFeedback.findMany({
     orderBy: { createdAt: "desc" },

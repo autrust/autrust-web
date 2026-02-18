@@ -10,8 +10,8 @@ const CheckoutSchema = z.object({
   vin: z.string().optional(),
 });
 
-// MVP pricing (à adapter)
-const REPORT_PRICE_CENTS = 1990; // 19.90€
+// CarVertical : vendeur ou acheteur paie 10 €
+const REPORT_PRICE_CENTS = 1000; // 10 €
 const REPORT_CURRENCY = "eur";
 
 export async function POST(req: Request) {

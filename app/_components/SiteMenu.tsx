@@ -8,6 +8,7 @@ const menuLinks = [
   { href: "/#comment-ca-marche", label: "Comment ça marche" },
   { href: "/pourquoi-autrust", label: "Pourquoi AuTrust" },
   { href: "/securite-verification", label: "Sécurité & vérification" },
+  { href: "/tarifs", label: "Tarifs" },
   { href: "/listings", label: "Achat" },
   { href: "/location", label: "Location" },
   { href: "/garages", label: "Garages partenaires" },

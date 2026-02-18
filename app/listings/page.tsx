@@ -19,6 +19,7 @@ import { ActiveFiltersBar } from "@/app/_components/ActiveFiltersBar";
 import { SortButton } from "@/app/_components/SortButton";
 import { Pagination } from "@/app/_components/Pagination";
 import { getTotalVehiclesCount } from "@/app/_components/TotalVehiclesCountNumber";
+import { RegistrationFilter } from "./RegistrationFilter";
 
 export const dynamic = "force-dynamic";
 
@@ -118,6 +119,20 @@ export default async function ListingsPage({
       ...(filters.minPowerKw !== undefined ? { gte: filters.minPowerKw } : {}),
       ...(filters.maxPowerKw !== undefined ? { lte: filters.maxPowerKw } : {}),
     };
+  }
+  if (filters.registered === "yes") {
+    const registrationDateFilter: Prisma.DateTimeFilter = { not: null };
+    // Filtrer par année de mise en circulation si spécifiée
+    if (filters.minRegistrationYear !== undefined) {
+      registrationDateFilter.gte = new Date(`${filters.minRegistrationYear}-01-01`);
+    }
+    if (filters.maxRegistrationYear !== undefined) {
+      registrationDateFilter.lte = new Date(`${filters.maxRegistrationYear}-12-31T23:59:59`);
+    }
+    where.firstRegistrationDate = registrationDateFilter;
+  }
+  if (filters.registered === "no") {
+    where.firstRegistrationDate = null;
   }
 
   const sort = filters.sort ?? "";
@@ -271,6 +286,15 @@ export default async function ListingsPage({
           )}
           {filters.radiusKm && (
             <input type="hidden" name="radiusKm" value={String(filters.radiusKm)} />
+          )}
+          {filters.registered && (
+            <input type="hidden" name="registered" value={filters.registered} />
+          )}
+          {filters.minRegistrationYear && (
+            <input type="hidden" name="minRegistrationYear" value={String(filters.minRegistrationYear)} />
+          )}
+          {filters.maxRegistrationYear && (
+            <input type="hidden" name="maxRegistrationYear" value={String(filters.maxRegistrationYear)} />
           )}
           <div className="grid gap-3 md:grid-cols-5">
             <input
@@ -459,6 +483,10 @@ export default async function ListingsPage({
               />
               Accidentée
             </label>
+          </div>
+
+          <div className="mt-3">
+            <RegistrationFilter />
           </div>
 
           <OptionsSection selectedCount={filters.options?.length ?? 0} filters={filters} />

@@ -9,7 +9,9 @@
     "lint": "eslint",
     "db:generate": "prisma generate",
     "db:migrate": "prisma migrate dev",
-    "db:push": "prisma db push"
+    "db:push": "prisma db push",
+    "db:seed-garages": "node scripts/seed-demo-garages.mjs",
+    "db:seed-chiffres": "node scripts/seed-demo-chiffres.mjs"
   },
   "dependencies": {
     "@prisma/adapter-better-sqlite3": "^7.3.0",

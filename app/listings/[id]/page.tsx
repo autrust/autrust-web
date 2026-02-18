@@ -424,6 +424,27 @@ export default async function ListingDetail({
                 </div>
               ) : null}
 
+              <div>
+                <div className="text-xs text-slate-500">Immatriculation</div>
+                <div className="font-medium">
+                  {listing.firstRegistrationDate
+                    ? (
+                        <>
+                          Déjà été immatriculé
+                          <span className="text-slate-600 font-normal">
+                            {" "}
+                            —{" "}
+                            {new Date(listing.firstRegistrationDate).toLocaleDateString("fr-BE", {
+                              month: "long",
+                              year: "numeric",
+                            })}
+                          </span>
+                        </>
+                      )
+                    : "Pas encore été immatriculé"}
+                </div>
+              </div>
+
               {listing.color ? (
                 <div>
                   <div className="text-xs text-slate-500">Couleur</div>
