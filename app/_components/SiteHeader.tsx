@@ -14,15 +14,23 @@ export async function SiteHeader({ locale }: { locale: Locale }) {
   return (
     <header className="sticky top-0 z-10 border-b border-slate-200/70 bg-white/75 backdrop-blur">
       <Link href="/" className="block w-full bg-white">
-        <div className="relative h-20 w-full sm:h-28">
-          <Image
-            src="/autrust-banner-v5.png"
-            alt="Autrust"
-            fill
-            priority
-            sizes="100vw"
-            className="object-cover object-center w-full"
-          />
+        <div className="relative w-full overflow-hidden" style={{ height: '5cm' }}>
+          <video
+            autoPlay
+            loop
+            muted
+            playsInline
+            className="absolute inset-0 w-full h-full object-cover"
+          >
+            <source src="/autrust-banner-video.mp4" type="video/mp4" />
+            {/* Fallback image si la vidéo ne charge pas */}
+            <Image
+              src="/autrust-banner-v6.png"
+              alt="Autrust"
+              fill
+              className="object-cover object-center w-full"
+            />
+          </video>
         </div>
       </Link>
 

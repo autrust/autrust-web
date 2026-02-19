@@ -384,6 +384,21 @@ export default async function HomePage() {
             <p className="mt-4 max-w-2xl text-base sm:text-lg text-slate-600">
               {t.home.howItWorksIntro}
             </p>
+            {/* Vidéo promotionnelle */}
+            <div className="mt-6 flex justify-center">
+              <div className="rounded-lg overflow-hidden shadow-sm max-w-xs">
+                <video
+                  autoPlay
+                  loop
+                  muted
+                  playsInline
+                  className="w-full h-auto"
+                  controls
+                >
+                  <source src="/autrust-promo-video.mp4" type="video/mp4" />
+                </video>
+              </div>
+            </div>
             <div className="mt-8 flex flex-wrap gap-2">
               <span className="inline-flex items-center rounded-full border border-slate-200 bg-white px-3 py-1 text-sm text-slate-700">
                 {t.home.verifiedSellers}
