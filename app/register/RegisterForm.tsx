@@ -1,10 +1,12 @@
 "use client";
 
-import { useState } from "react";
+import { useCallback, useState } from "react";
 import { useRouter } from "next/navigation";
+import { isSafeRedirectPath } from "@/lib/sanitize";
+import { TurnstileWidget } from "@/app/_components/TurnstileWidget";
 
 type RegisterFormProps = {
-  /** URL de redirection après inscription (ex. /sell). Doit commencer par /. */
+  /** URL de redirection après inscription (ex. /sell). Doit être un chemin sûr (same-origin). */
   redirectTo?: string;
 };
 
@@ -23,25 +25,31 @@ export function RegisterForm({ redirectTo = "/account" }: RegisterFormProps) {
   const [vatNumber, setVatNumber] = useState("");
   const [selectedPlan, setSelectedPlan] = useState<"START" | "PRO" | "ELITE" | "ENTERPRISE" | null>(null);
   const [maxListings, setMaxListings] = useState("");
+  const [turnstileToken, setTurnstileToken] = useState<string | null>(null);
 
-  const safeRedirect = redirectTo.startsWith("/") && !redirectTo.startsWith("//") ? redirectTo : "/account";
+  const safeRedirect = isSafeRedirectPath(redirectTo) ? redirectTo : "/account";
+  const onTurnstileVerify = useCallback((token: string) => setTurnstileToken(token), []);
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
     setBusy(true);
     setError(null);
 
+    const body: { email: string; password: string; turnstileToken?: string } = { email, password };
+    if (turnstileToken) body.turnstileToken = turnstileToken;
+
     const res = await fetch("/api/auth/register", {
       method: "POST",
       headers: { "content-type": "application/json" },
-      body: JSON.stringify({ email, password }),
+      body: JSON.stringify(body),
     });
 
     setBusy(false);
     if (!res.ok) {
-      const body = (await res.json().catch(() => null)) as { error?: string } | null;
-      if (body?.error === "EMAIL_ALREADY_USED") setError("Cet email est déjà utilisé.");
-      else if (body?.error === "WEAK_PASSWORD") setError("Mot de passe trop faible (8 caractères min).");
+      const data = (await res.json().catch(() => null)) as { error?: string } | null;
+      if (data?.error === "TURNSTILE_FAILED") setError("Vérification anti-robot échouée. Réessayez.");
+      else if (data?.error === "EMAIL_ALREADY_USED") setError("Cet email est déjà utilisé.");
+      else if (data?.error === "WEAK_PASSWORD") setError("Mot de passe trop faible (8 caractères min).");
       else setError("Inscription impossible.");
       return;
     }
@@ -303,6 +311,8 @@ export function RegisterForm({ redirectTo = "/account" }: RegisterFormProps) {
         />
         <div className="mt-1 text-xs text-slate-500">8 caractères minimum.</div>
       </div>
+
+      <TurnstileWidget onVerify={onTurnstileVerify} size="compact" />
 
       {error ? <div className="text-sm text-red-700">{error}</div> : null}
 

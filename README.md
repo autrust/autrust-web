@@ -54,3 +54,11 @@ Ouvre `http://localhost:3000`.
 
 - **Prisma ORM v7**: la connexion DB est configurée dans `prisma.config.ts` (pas dans `schema.prisma`).
 - **Modération “IA” (MVP)**: filtre texte dans `lib/moderation.ts`. On peut ensuite brancher une vraie modération (texte + image) via un provider (Cloudinary / OpenAI / etc.).
+
+### Cloudflare & Turnstile (optionnel)
+
+- **Cloudflare** : mettre le domaine (ex. autrust.be) derrière Cloudflare pour WAF, DDoS, rate limiting, firewall et logs. Guide pas à pas : **`docs/CLOUDFLARE_SETUP.md`**.
+- **Turnstile** (anti-bots) : widget sur login, inscription, contact et « signaler un problème ». Pour l’activer :
+  1. Créer un widget sur [dash.cloudflare.com](https://dash.cloudflare.com) → **Turnstile**.
+  2. Renseigner dans `.env` (ou variables Vercel) : `NEXT_PUBLIC_TURNSTILE_SITE_KEY` et `TURNSTILE_SECRET_KEY`.
+  - Code : `lib/turnstile.ts` (vérification serveur), `app/_components/TurnstileWidget.tsx` (widget). Sans clés, le site fonctionne sans Turnstile.

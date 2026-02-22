@@ -5,7 +5,8 @@ import { prisma } from "@/lib/db";
 import { moderateListingInput } from "@/lib/moderation";
 import { randomUUID } from "node:crypto";
 import { getCurrentUser, isAdmin } from "@/lib/auth";
-import { MAX_LISTINGS_PARTICULIER } from "@/lib/constants";
+import { LISTING_DESCRIPTION_MIN_LENGTH, MAX_LISTINGS_PARTICULIER } from "@/lib/constants";
+import { sanitizeText } from "@/lib/sanitize";
 
 const CategorySchema = z.enum(["auto", "moto", "utilitaire", "VOITURE", "MOTO", "UTILITAIRE"]);
 const FuelSchema = z.enum([
@@ -74,7 +75,7 @@ const CreateListingSchema = z.object({
   hasMinorDamage: z.coerce.boolean().optional(),
   hasCarVerticalVerification: z.coerce.boolean().optional(),
   title: z.string().min(8),
-  description: z.string().min(20),
+  description: z.string().min(LISTING_DESCRIPTION_MIN_LENGTH),
   category: CategorySchema,
   price: z.coerce.number().int().nonnegative(),
   year: z.coerce.number().int().min(1900).max(2100),
@@ -271,11 +272,36 @@ export async function POST(req: Request) {
 
   const data = parsed.data;
 
+  // Sanitization XSS : champs texte avant modération et persistance
+  const title = sanitizeText(data.title, 200);
+  const description = sanitizeText(data.description, 5000);
+  const city = sanitizeText(data.city, 100);
+  const contactName = data.contactName ? sanitizeText(data.contactName, 80) : undefined;
+  const contactPhone = data.contactPhone ? sanitizeText(data.contactPhone, 30) : undefined;
+  const sellerOptionsNote = data.sellerOptionsNote ? sanitizeText(data.sellerOptionsNote, 2000) : undefined;
+  const color = data.color ? sanitizeText(data.color, 40) : undefined;
+  const make = data.make ? sanitizeText(data.make, 80) : undefined;
+  const model = data.model ? sanitizeText(data.model, 120) : undefined;
+  const displacementL = data.displacementL ? sanitizeText(data.displacementL, 20) : undefined;
+
+  if (title.length < 8) {
+    return NextResponse.json({ error: "INVALID_INPUT", details: { title: ["Titre trop court après nettoyage."] } }, { status: 400 });
+  }
+  if (description.length < LISTING_DESCRIPTION_MIN_LENGTH) {
+    return NextResponse.json(
+      { error: "INVALID_INPUT", details: { description: [`Au moins ${LISTING_DESCRIPTION_MIN_LENGTH} caractères après nettoyage.`] } },
+      { status: 400 }
+    );
+  }
+  if (city.length < 2) {
+    return NextResponse.json({ error: "INVALID_INPUT", details: { city: ["Ville invalide."] } }, { status: 400 });
+  }
+
   const moderation = moderateListingInput({
-    title: data.title,
-    description: data.description,
+    title,
+    description,
     contactEmail: data.contactEmail ?? null,
-    contactPhone: data.contactPhone ?? null,
+    contactPhone: contactPhone ?? null,
   });
   if (!moderation.ok) {
     return NextResponse.json(
@@ -302,17 +328,17 @@ export async function POST(req: Request) {
       manageToken: randomUUID(),
       sellerId: dbUser.id,
       status: "DRAFT",
-      title: data.title,
-      description: data.description,
+      title,
+      description,
       category: toDbCategory(data.category),
       mode: toDbMode(data.mode),
       price: data.price,
       year: data.year,
       km: data.km,
-      city: data.city,
+      city,
       country: data.country ?? undefined,
       bodyType: toDbBodyType(data.bodyType),
-      color: data.color,
+      color: color || undefined,
       fuel: toDbFuel(data.fuel),
       gearbox: toDbGearbox(data.gearbox),
       powerKw: data.powerKw,
@@ -327,18 +353,18 @@ export async function POST(req: Request) {
       sellerOptions: data.sellerOptions
         ? (data.sellerOptions as unknown as Prisma.InputJsonValue)
         : undefined,
-      sellerOptionsNote: data.sellerOptionsNote,
-      contactName: data.contactName,
-      contactPhone: data.contactPhone,
+      sellerOptionsNote: sellerOptionsNote || undefined,
+      contactName: contactName || undefined,
+      contactPhone: contactPhone || undefined,
       contactEmail: data.contactEmail ?? dbUser.email,
       vin,
       firstRegistrationDate:
         data.firstRegistrationDate != null && data.firstRegistrationDate !== ""
           ? new Date(data.firstRegistrationDate)
           : null,
-      make: data.make ?? (decoded && decodedMatchesVin ? decoded.make : undefined),
-      model: data.model ?? (decoded && decodedMatchesVin ? decoded.model : undefined),
-      displacementL: data.displacementL ?? (decoded && decodedMatchesVin ? decoded.displacementL : undefined),
+      make: make ?? (decoded && decodedMatchesVin ? decoded.make : undefined),
+      model: model ?? (decoded && decodedMatchesVin ? decoded.model : undefined),
+      displacementL: displacementL ?? (decoded && decodedMatchesVin ? decoded.displacementL : undefined),
       ...(decoded && decodedMatchesVin
         ? {
             trim: decoded.trim,

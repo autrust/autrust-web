@@ -4,6 +4,8 @@ import {
   CARVERTICAL_PRICE_EUR,
   CARVERTICAL_DISCOUNT_PERCENT,
   MAX_LISTINGS_PARTICULIER,
+  PROMO_PRO_END_DATE,
+  isProPromoActive,
 } from "@/lib/constants";
 
 describe("constants CarVertical", () => {
@@ -26,5 +28,15 @@ describe("constants CarVertical", () => {
 describe("MAX_LISTINGS_PARTICULIER", () => {
   it("définit la limite pour les particuliers", () => {
     expect(MAX_LISTINGS_PARTICULIER).toBe(5);
+  });
+});
+
+describe("promo pro", () => {
+  it("PROMO_PRO_END_DATE est le 1er juillet 2026", () => {
+    expect(PROMO_PRO_END_DATE.toISOString()).toBe("2026-07-01T00:00:00.000Z");
+  });
+
+  it("isProPromoActive retourne un booléen", () => {
+    expect(typeof isProPromoActive()).toBe("boolean");
   });
 });

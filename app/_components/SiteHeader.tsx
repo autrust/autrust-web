@@ -14,7 +14,7 @@ export async function SiteHeader({ locale }: { locale: Locale }) {
   return (
     <header className="sticky top-0 z-50 isolate border-b border-slate-200/70 bg-white shadow-sm">
       <Link href="/" className="block w-full bg-white">
-        <div className="relative w-full overflow-hidden bg-white isolate" style={{ height: '5cm' }}>
+        <div className="relative w-full overflow-hidden bg-white isolate" style={{ height: "5cm" }}>
           <video
             autoPlay
             loop

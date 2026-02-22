@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { CARVERTICAL_DISCOUNT_PERCENT } from "@/lib/constants";
+import { CARVERTICAL_DISCOUNT_PERCENT, isProPromoActive, PROMO_LANCEMENT_PRO } from "@/lib/constants";
 
 export const metadata = {
   title: "Tarifs | AuTrust",
@@ -71,6 +71,7 @@ export default function TarifsPage() {
           <p className="mt-2 text-slate-600">
             <strong>Gratuit</strong> pour toute annonce. Options premium facultatives pour plus de visibilité.
           </p>
+          <p className="mt-1 text-sm text-slate-500">Pour les particuliers rien ne change.</p>
           <ul className="mt-4 space-y-2 text-slate-700">
             {PARTICULIER_OPTIONS.map((opt) => (
               <li key={opt.label} className="flex items-center justify-between gap-4">
@@ -98,6 +99,11 @@ export default function TarifsPage() {
           <p className="mt-2 text-slate-600">
             Choisissez l’offre adaptée au nombre de véhicules que vous souhaitez publier.
           </p>
+          {isProPromoActive() && (
+            <p className="mt-3 rounded-xl bg-amber-50 border border-amber-200 px-4 py-2 text-sm font-medium text-amber-900 inline-block">
+              {PROMO_LANCEMENT_PRO}
+            </p>
+          )}
         </div>
         <div className="mt-8 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
           {PLANS.map((plan) => {
@@ -116,9 +122,12 @@ export default function TarifsPage() {
                   <span className="font-semibold text-slate-900">{plan.name}</span>
                 </div>
                 <div className="mt-2 text-sm text-slate-600">{plan.range}</div>
-                <div className="mt-4 flex items-baseline gap-1">
+                <div className="mt-4 flex flex-wrap items-baseline gap-1">
                   <span className="text-2xl font-bold text-slate-900">{plan.price} €</span>
                   <span className="text-slate-600">/mois</span>
+                  {isProPromoActive() && (
+                    <span className="w-full text-xs font-medium text-amber-700">Gratuit jusqu'au 1er juil. 2026</span>
+                  )}
                 </div>
                 <p className="mt-2 text-sm text-slate-600">{plan.description}</p>
                 <div className="mt-6">

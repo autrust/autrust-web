@@ -174,6 +174,7 @@ export type ListingFilters = {
   maxPrice?: number;
   minYear?: number;
   maxYear?: number;
+  minKm?: number;
   maxKm?: number;
   sellerId?: string;
   sponsored?: boolean;
@@ -273,6 +274,7 @@ export function parseListingFilters(searchParams: SearchParams): ListingFilters 
     maxPrice: toInt(firstString(searchParams.maxPrice)),
     minYear: toInt(firstString(searchParams.minYear)),
     maxYear: toInt(firstString(searchParams.maxYear)),
+    minKm: toInt(firstString(searchParams.minKm)),
     maxKm: toInt(firstString(searchParams.maxKm)),
     sellerId: sellerId ? sellerId : undefined,
     sponsored: sponsored !== undefined ? sponsored : undefined,
@@ -300,6 +302,7 @@ export function filterListings(listings: Listing[], filters: ListingFilters) {
     if (filters.maxPrice !== undefined && l.price > filters.maxPrice) return false;
     if (filters.minYear !== undefined && l.year < filters.minYear) return false;
     if (filters.maxYear !== undefined && l.year > filters.maxYear) return false;
+    if (filters.minKm !== undefined && l.km < filters.minKm) return false;
     if (filters.maxKm !== undefined && l.km > filters.maxKm) return false;
 
     if (city && normalize(l.city) !== city) return false;

@@ -1,6 +1,15 @@
 import { NextResponse } from "next/server";
+import { z } from "zod";
 import { prisma } from "@/lib/db";
 import { toListingCardModelFromDb } from "@/lib/listingsDb";
+
+// CUID ~25 caractères alphanumériques
+const ListingIdSchema = z.string().min(20).max(30).regex(/^[a-z0-9]+$/i);
+const IdsQuerySchema = z
+  .string()
+  .max(500)
+  .transform((s) => s.split(",").map((x) => x.trim()).filter(Boolean).slice(0, 10))
+  .pipe(z.array(ListingIdSchema));
 
 export async function GET(req: Request) {
   const url = new URL(req.url);
@@ -8,11 +17,11 @@ export async function GET(req: Request) {
   if (!idsParam) {
     return NextResponse.json({ items: [] });
   }
-  const ids = idsParam
-    .split(",")
-    .map((s) => s.trim())
-    .filter(Boolean)
-    .slice(0, 10);
+  const parsed = IdsQuerySchema.safeParse(idsParam);
+  if (!parsed.success) {
+    return NextResponse.json({ error: "INVALID_IDS", items: [] }, { status: 400 });
+  }
+  const ids = parsed.data;
   if (ids.length === 0) {
     return NextResponse.json({ items: [] });
   }

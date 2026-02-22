@@ -3,12 +3,13 @@ import { z } from "zod";
 import { prisma } from "@/lib/db";
 import { getAppUrl, getStripeServer } from "@/lib/stripe";
 
+/** Top annonces (mises en avant) et Boost restent toujours payants ; l'argent passe par Stripe (non concernés par la promo pro). */
 const CheckoutSchema = z.object({
   manageToken: z.string().min(10),
   duration: z.enum(["7", "30", "48h"]), // 7j, 30j, ou Boost express 48h
 });
 
-// Prix selon la durée (particuliers / options premium)
+// Prix selon la durée (particuliers / options premium) — paiement Stripe
 const SPONSOR_PRICES: Record<string, { cents: number; label: string; description: string }> = {
   "7": { cents: 999, label: "Top recherche 7 jours", description: "7 jours" },
   "30": { cents: 1999, label: "Top recherche 30 jours", description: "30 jours" },

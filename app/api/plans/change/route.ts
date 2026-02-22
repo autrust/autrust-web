@@ -3,6 +3,7 @@ import { z } from "zod";
 import { prisma } from "@/lib/db";
 import { requireUser } from "@/lib/auth";
 import { getStripeServer, getAppUrl } from "@/lib/stripe";
+import { isProPromoActive } from "@/lib/constants";
 
 const PLAN_PRICE_EUR: Record<string, number> = {
   START: 49,
@@ -83,9 +84,10 @@ export async function POST(req: Request) {
     : true; // Si pas de plan actuel, considérer comme upgrade
 
   if (isUpgrade) {
-    // Upgrade : payer la différence immédiatement
-    const currentPrice = currentPlan ? PLAN_PRICE_EUR[currentPlan] : 0;
-    const newPrice = PLAN_PRICE_EUR[newPlan];
+    // Upgrade : pendant la promo (avant 1er juillet 2026) = gratuit ; après = paiement Stripe comme CarVertical
+    const promoActive = isProPromoActive();
+    const currentPrice = promoActive ? 0 : (currentPlan ? PLAN_PRICE_EUR[currentPlan] : 0);
+    const newPrice = promoActive ? 0 : PLAN_PRICE_EUR[newPlan];
     const differenceCents = Math.round((newPrice - currentPrice) * 100);
 
     if (differenceCents <= 0) {

@@ -3,13 +3,7 @@
 import { useCallback, useState } from "react";
 import { TurnstileWidget } from "@/app/_components/TurnstileWidget";
 
-export function ReportProblemForm({
-  onClose,
-  pageUrl,
-}: {
-  onClose: () => void;
-  pageUrl?: string;
-}) {
+export function ContactForm() {
   const [message, setMessage] = useState("");
   const [email, setEmail] = useState("");
   const [turnstileToken, setTurnstileToken] = useState<string | null>(null);
@@ -31,7 +25,7 @@ export function ReportProblemForm({
     } = {
       message: message.trim(),
       email: email.trim() || undefined,
-      pageUrl: pageUrl || (typeof window !== "undefined" ? window.location.href : undefined),
+      pageUrl: typeof window !== "undefined" ? window.location.href : undefined,
     };
     if (turnstileToken) body.turnstileToken = turnstileToken;
 
@@ -48,11 +42,11 @@ export function ReportProblemForm({
           error?: string;
           message?: string;
         };
-        setErrorMsg(
-          data.error === "TURNSTILE_FAILED"
-            ? "Vérification anti-robot échouée. Réessayez."
-            : data.details?.fieldErrors?.message?.[0] || data.message || "Une erreur est survenue."
-        );
+        if (data.error === "TURNSTILE_FAILED") {
+          setErrorMsg("Vérification anti-robot échouée. Réessayez.");
+        } else {
+          setErrorMsg(data.details?.fieldErrors?.message?.[0] ?? data.message ?? "Une erreur est survenue.");
+        }
         setStatus("error");
         return;
       }
@@ -60,7 +54,6 @@ export function ReportProblemForm({
       setMessage("");
       setEmail("");
       setStatus("success");
-      setTimeout(onClose, 1500);
     } catch {
       setErrorMsg("Une erreur est survenue.");
       setStatus("error");
@@ -69,60 +62,51 @@ export function ReportProblemForm({
 
   if (status === "success") {
     return (
-      <p className="text-sm text-emerald-600">
-        Merci, le problème a bien été signalé. Nous le traiterons au plus vite.
+      <p className="text-emerald-600">
+        Merci pour votre message. Nous vous recontacterons si nécessaire.
       </p>
     );
   }
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-3">
+    <form onSubmit={handleSubmit} className="space-y-4">
       <div>
-        <label htmlFor="problem-report-message" className="block text-sm font-medium text-slate-700">
+        <label htmlFor="contact-message" className="block text-sm font-medium text-slate-700">
           Votre message
         </label>
         <textarea
-          id="problem-report-message"
+          id="contact-message"
           value={message}
           onChange={(e) => setMessage(e.target.value)}
-          placeholder="Ex: question, problème technique, demande..."
-          rows={3}
+          placeholder="Question, demande ou problème technique..."
+          rows={4}
           required
           maxLength={2000}
-          className="mt-1 w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-sky-300/60"
+          className="mt-2 w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-sky-300/60"
         />
       </div>
       <div>
-        <label htmlFor="problem-report-email" className="block text-sm font-medium text-slate-700">
-          Votre email (optionnel, pour vous recontacter)
+        <label htmlFor="contact-email" className="block text-sm font-medium text-slate-700">
+          Votre email (pour vous recontacter)
         </label>
         <input
-          id="problem-report-email"
+          id="contact-email"
           type="email"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
-          placeholder="votre@email.com"
-          className="mt-1 w-full rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-sky-300/60"
+          placeholder="vous@exemple.com"
+          className="mt-2 w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-sky-300/60"
         />
       </div>
       <TurnstileWidget onVerify={onTurnstileVerify} size="compact" />
       {errorMsg && <p className="text-sm text-red-600">{errorMsg}</p>}
-      <div className="flex gap-2">
-        <button
-          type="submit"
-          disabled={status === "loading" || !message.trim()}
-          className="rounded-xl bg-sky-600 px-4 py-2 text-sm font-medium text-white hover:bg-sky-500 disabled:opacity-50"
-        >
-          {status === "loading" ? "Envoi..." : "Envoyer"}
-        </button>
-        <button
-          type="button"
-          onClick={onClose}
-          className="rounded-xl border border-slate-200 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50"
-        >
-          Annuler
-        </button>
-      </div>
+      <button
+        type="submit"
+        disabled={status === "loading"}
+        className="rounded-xl bg-sky-600 px-5 py-2.5 font-medium text-white hover:bg-sky-500 disabled:opacity-60"
+      >
+        {status === "loading" ? "Envoi…" : "Envoyer"}
+      </button>
     </form>
   );
 }

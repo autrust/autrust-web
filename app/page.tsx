@@ -231,28 +231,40 @@ export default async function HomePage() {
             </Link>
           </div>
 
-          <div className="mt-6 grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-4">
+          <div className="mt-6 grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-3">
             {getPopularAndOtherBrands().popular.map((brand) => (
               <Link
                 key={brand.slug}
                 href={`/listings?make=${encodeURIComponent(brand.name)}`}
-                className="flex flex-col items-center justify-center rounded-2xl border border-slate-200/70 bg-white/75 p-4 hover:border-sky-300 hover:bg-sky-50/60 transition text-center min-h-[80px]"
+                className="flex flex-col items-center justify-center rounded-xl border border-slate-200/70 bg-white/75 py-3 px-3 hover:border-sky-300 hover:bg-sky-50/60 transition text-center"
               >
-                <div className="text-sm font-semibold text-slate-900 leading-tight">{brand.name}</div>
+                <span className="text-sm font-semibold text-slate-900 leading-tight">{brand.name}</span>
               </Link>
             ))}
           </div>
-          <p className="mt-6 text-sm font-medium text-slate-600">{t.home.allBrands}</p>
-          <div className="mt-3 grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8 gap-4">
-            {CAR_BRANDS.map((brand) => (
+
+          {/* Toutes les marques : compact pills, moins d’espace, look startup */}
+          <div className="mt-8">
+            <div className="flex items-center justify-between gap-3 flex-wrap">
+              <p className="text-sm font-medium text-slate-600">{t.home.allBrands}</p>
               <Link
-                key={brand.slug}
-                href={`/listings?make=${encodeURIComponent(brand.name)}`}
-                className="flex flex-col items-center justify-center rounded-2xl border border-slate-200/70 bg-white/75 p-4 hover:border-sky-300 hover:bg-sky-50/60 transition text-center min-h-[80px]"
+                href="/listings"
+                className="text-xs font-medium text-sky-600 hover:text-sky-700 underline underline-offset-2"
               >
-                <div className="text-sm font-semibold text-slate-900 leading-tight">{brand.name}</div>
+                {t.common.viewAll} →
               </Link>
-            ))}
+            </div>
+            <div className="mt-3 flex flex-wrap gap-2">
+              {CAR_BRANDS.map((brand) => (
+                <Link
+                  key={brand.slug}
+                  href={`/listings?make=${encodeURIComponent(brand.name)}`}
+                  className="rounded-full border border-slate-200 bg-white/90 px-3 py-1.5 text-xs font-medium text-slate-700 hover:border-sky-300 hover:bg-sky-50/80 hover:text-sky-800 transition"
+                >
+                  {brand.name}
+                </Link>
+              ))}
+            </div>
           </div>
         </section>
 

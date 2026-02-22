@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { isProPromoActive, PROMO_LANCEMENT_PRO } from "@/lib/constants";
 
 type PlanId = "START" | "PRO" | "ELITE" | "ENTERPRISE";
 
@@ -136,6 +137,9 @@ export function ChangePlanClient({ currentPlan, currentMaxListings, pendingPlanC
     return (
       <div className="rounded-2xl border border-slate-200 bg-white/80 p-4">
         <div className="text-xs text-slate-500">Pack professionnel</div>
+        {isProPromoActive() && (
+          <p className="mt-1 text-xs text-amber-800">Gratuit jusqu'au 1er juil. 2026 (sauf rapport CarVertical 14,99 €)</p>
+        )}
         <div className="mt-1 font-medium text-slate-900">
           {planLabel(currentPlan)}
           {currentMaxListings != null ? (
@@ -169,6 +173,11 @@ export function ChangePlanClient({ currentPlan, currentMaxListings, pendingPlanC
   return (
     <div className="rounded-2xl border border-slate-200 bg-white/80 p-4">
       <div className="text-sm font-semibold text-slate-900">Changer de pack</div>
+      {isProPromoActive() && (
+        <p className="mt-2 rounded-lg bg-amber-50 border border-amber-200 px-3 py-2 text-xs text-amber-900">
+          {PROMO_LANCEMENT_PRO}
+        </p>
+      )}
       <form onSubmit={handleSubmit} className="mt-3 space-y-4">
         <div>
           <label className="text-xs text-slate-600">Pack</label>
@@ -225,7 +234,10 @@ export function ChangePlanClient({ currentPlan, currentMaxListings, pendingPlanC
           <div className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-700">
             {getPlanOrder(selectedPlan) > getPlanOrder(currentPlan) ? (
               <>
-                <strong>Upgrade</strong> : vous paierez la différence ({PLANS.find((p) => p.id === selectedPlan)?.price ?? 0} €/mois - {PLANS.find((p) => p.id === currentPlan)?.price ?? 0} €/mois) et le changement sera actif immédiatement.
+                <strong>Upgrade</strong>{" "}
+                {isProPromoActive()
+                  ? ": gratuit pendant la promo, le changement sera actif immédiatement."
+                  : `: vous paierez la différence (${PLANS.find((p) => p.id === selectedPlan)?.price ?? 0} €/mois - ${PLANS.find((p) => p.id === currentPlan)?.price ?? 0} €/mois) via Stripe et le changement sera actif immédiatement.`}
               </>
             ) : getPlanOrder(selectedPlan) < getPlanOrder(currentPlan) ? (
               <>

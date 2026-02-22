@@ -1,0 +1,46 @@
+---
+description: Contexte AuTrust ; IA auto-améliorante, protection croissante et amélioration continue de la plateforme
+alwaysApply: true
+---
+
+# Contexte AuTrust & IA auto-améliorante
+
+## Stack
+- **Front/API** : Next.js 16 (App Router), React 19, TypeScript, Tailwind
+- **Données** : Prisma (SQLite dev / PostgreSQL prod), Zod pour la validation
+- **Paiements** : Stripe (checkout, webhooks, Connect pour vendeurs)
+- **Auth** : sessions maison (bcrypt, cookies HTTP-only), pas NextAuth
+- **Contenu** : texte et copy en **français** (BEL)
+
+## Où se trouvent les choses
+- Constantes métier (prix, dates promo, limites) : `lib/constants.ts`
+- Sanitization / redirections sûres : `lib/sanitize.ts`
+- Sécurité (rate limit, headers, CSP) : `middleware.ts`
+- Légal / placeholders : `lib/legal-content.ts`
+- Déploiement / checklist : `DEPLOY.md` — Sécurité : `SECURITY.md`
+
+## Auto-amélioration
+Quand tu prends une décision importante, corriges un bug récurrent ou introduces une convention :
+1. **Documente-la** au bon endroit : règle dans `.cursor/rules/`, `SECURITY.md`, `DEPLOY.md`, ou commentaire dans le code.
+2. **Cette règle** : si tu identifies un pattern réutilisable, propose une mise à jour courte de ce fichier ou d’une règle existante.
+3. Rester concis ; privilégier exemples concrets et chemins de fichiers.
+
+## Amélioration récursive (méta)
+À la fin d’une tâche non triviale, faire un tour **récursif** :
+1. **Niveau 1** — Quoi documenter ? → Mettre à jour la doc / une règle pour que la prochaine fois ce soit évident.
+2. **Niveau 2** — Pourquoi ça ne l’était pas déjà ? Si la même omission ou le même type d’erreur pourrait se répéter, **ajouter une consigne** dans la règle concernée (ex. : « Avant d’ajouter une route API, vérifier rate limit dans `middleware.ts` »).
+3. **Niveau 3** — Le processus d’amélioration lui-même : si tu constates qu’on oublie toujours une même étape (ex. tests, lint, sécurité), **écris une ligne dans cette section** pour que les prochaines sessions appliquent cette étape.
+
+En résumé : améliorer le code et la doc, puis améliorer les règles qui disent *comment* améliorer, puis améliorer la façon dont on met à jour ces règles. Une seule itération par session suffit ; rester léger.
+
+## Protection de la plateforme (toujours plus)
+La plateforme doit être **mieux protégée de jour en jour**. À chaque évolution (nouvelle route, nouveau champ utilisateur, nouvelle intégration) :
+- **Sécurité** : appliquer et documenter les bonnes pratiques (rate limit, sanitization, validation, headers). Mettre à jour `SECURITY.md` et `middleware.ts` si besoin.
+- Si tu repères une surface d’attaque ou un oubli (ex. endpoint sans rate limit, entrée non sanitizée), le traiter et ajouter une consigne pour ne pas réitérer.
+L’IA doit renforcer la protection à chaque session, pas seulement la maintenir.
+
+## Amélioration à l’infini
+La plateforme s’**améliore sans plafond** : UX, perfs, maintenabilité, fonctionnalités. Chaque session doit :
+- Laisser le code un peu mieux qu’avant (refactors ciblés, clarté, moins de dette).
+- Documenter les prochaines pistes d’amélioration (règle, TODO structurés, ou section dans la doc) pour que la session suivante puisse enchaîner.
+Objectif : une boucle sans fin où chaque jour la plateforme est plus sûre et plus aboutie.

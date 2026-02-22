@@ -22,6 +22,11 @@ import { SortButton } from "@/app/_components/SortButton";
 import { Pagination } from "@/app/_components/Pagination";
 import { getTotalVehiclesCount } from "@/app/_components/TotalVehiclesCountNumber";
 import { RegistrationFilter } from "./RegistrationFilter";
+import {
+  recordSearchTerms,
+  getPopularMakes,
+  getPopularModelsByMake,
+} from "@/lib/searchTermCount";
 
 export const dynamic = "force-dynamic";
 
@@ -44,6 +49,11 @@ export default async function ListingsPage({
   const sp = await searchParams;
   const filters = parseListingFilters(sp);
 
+  // Enregistrer la recherche (marque/modèle) pour proposer après 4+ fois
+  if (filters.make?.trim() || filters.model?.trim()) {
+    recordSearchTerms(filters.make ?? null, filters.model ?? null).catch(() => {});
+  }
+
   const now = new Date();
   const where: Prisma.ListingWhereInput = {
     status: "ACTIVE",
@@ -61,7 +71,7 @@ export default async function ListingsPage({
       isSponsored: true,
       sponsoredUntil: { gt: now },
     } : {}),
-    ...(filters.make && filters.make !== "other" ? { make: { contains: filters.make } } : {}),
+    ...(filters.make ? { make: { contains: filters.make } } : {}),
     ...(filters.model ? { model: { contains: filters.model } } : {}),
     ...(filters.country ? { country: filters.country } : {}),
     ...(filters.city ? { city: { contains: filters.city } } : {}),
@@ -74,7 +84,9 @@ export default async function ListingsPage({
     ...(filters.minYear !== undefined || filters.maxYear !== undefined
       ? { year: { ...(filters.minYear !== undefined ? { gte: filters.minYear } : {}), ...(filters.maxYear !== undefined ? { lte: filters.maxYear } : {}) } }
       : {}),
-    ...(filters.maxKm !== undefined ? { km: { lte: filters.maxKm } } : {}),
+    ...(filters.minKm !== undefined || filters.maxKm !== undefined
+      ? { km: { ...(filters.minKm !== undefined ? { gte: filters.minKm } : {}), ...(filters.maxKm !== undefined ? { lte: filters.maxKm } : {}) } }
+      : {}),
   };
 
   if (filters.categorySlug) {
@@ -195,7 +207,7 @@ export default async function ListingsPage({
         });
 
   // Filtrer par marque (recherche insensible à la casse côté application pour SQLite)
-  if (filters.make && filters.make !== "other") {
+  if (filters.make) {
     const makeLower = filters.make.toLowerCase();
     optionFilteredItems = optionFilteredItems.filter((l) => {
       if (!l.make) return false;
@@ -233,11 +245,17 @@ export default async function ListingsPage({
   // Récupérer le nombre total de véhicules sur la plateforme
   const totalVehiclesOnPlatform = await getTotalVehiclesCount();
 
+  // Termes souvent recherchés (4+ fois) pour les proposer dans "Autre"
+  const [popularMakes, popularModelsByMake] = await Promise.all([
+    getPopularMakes(),
+    getPopularModelsByMake(),
+  ]);
+
   // Titre dynamique selon les filtres
   let pageTitle = "Annonces";
   if (seller) {
     pageTitle = `Annonces de ${seller.email.split("@")[0]}`;
-  } else if (filters.make && filters.make !== "other") {
+  } else if (filters.make) {
     pageTitle = `Véhicules ${filters.make}`;
   }
 
@@ -309,48 +327,209 @@ export default async function ListingsPage({
           {/* Recherche : marque, modèle, prix max, année min, km max, transmission, pays */}
           <div className="rounded-2xl border-2 border-slate-200/80 bg-white p-4 shadow-lg shadow-sky-500/10 focus-within:border-sky-400 focus-within:shadow-xl focus-within:shadow-sky-500/15 transition-all duration-200">
             <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-              <MakeModelSearchFields
-                idPrefix="search"
-                defaultMake={filters.make ?? ""}
-                defaultModel={filters.model ?? ""}
-                category={filters.categorySlug ?? ""}
-              />
-              <div>
-                <label htmlFor="search-maxPrice" className="mb-1 block text-xs font-medium text-slate-500">Prix max (€)</label>
-                <input
-                  id="search-maxPrice"
-                  name="maxPrice"
-                  type="number"
-                  min={0}
-                  defaultValue={filters.maxPrice?.toString() ?? ""}
-                  placeholder="—"
-                  className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-sky-300/60 focus:border-sky-300"
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 lg:col-span-2">
+                <MakeModelSearchFields
+                  idPrefix="search"
+                  defaultMake={filters.make ?? ""}
+                  defaultModel={filters.model ?? ""}
+                  category={filters.categorySlug ?? ""}
+                  additionalMakes={popularMakes}
+                  additionalModelsByMake={popularModelsByMake}
                 />
               </div>
               <div>
-                <label htmlFor="search-minYear" className="mb-1 block text-xs font-medium text-slate-500">Année min.</label>
-                <input
-                  id="search-minYear"
-                  name="minYear"
-                  type="number"
-                  min={1900}
-                  max={2100}
-                  defaultValue={filters.minYear?.toString() ?? ""}
-                  placeholder="—"
-                  className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-sky-300/60 focus:border-sky-300"
-                />
+                <details
+                  open={!!(filters.minPrice ?? filters.maxPrice)}
+                  className="group rounded-xl border border-slate-200 bg-white focus-within:ring-2 focus-within:ring-sky-300/60 focus-within:border-sky-300"
+                >
+                  <summary className="flex cursor-pointer list-none items-center justify-between px-4 py-3 text-slate-600 hover:text-slate-900 [&::-webkit-details-marker]:hidden">
+                    <span className="text-xs font-medium text-slate-500 group-open:text-slate-700">
+                      Prix (€)
+                      {(filters.minPrice !== undefined || filters.maxPrice !== undefined) && (
+                        <span className="ml-1 font-medium text-slate-800">
+                          {filters.minPrice ?? "…"} – {filters.maxPrice ?? "…"}
+                        </span>
+                      )}
+                    </span>
+                    <svg className="h-4 w-4 shrink-0 text-slate-400 transition-transform group-open:rotate-180" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden>
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                    </svg>
+                  </summary>
+                  <div className="border-t border-slate-100 px-4 pb-3 pt-2">
+                    <div className="grid grid-cols-2 gap-2">
+                      <div>
+                        <label htmlFor="search-minPrice" className="mb-0.5 block text-xs font-medium text-slate-500">De</label>
+                        <input
+                          id="search-minPrice"
+                          name="minPrice"
+                          type="number"
+                          min={0}
+                          defaultValue={filters.minPrice?.toString() ?? ""}
+                          placeholder="0"
+                          className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-sky-300/60 focus:border-sky-300"
+                        />
+                      </div>
+                      <div>
+                        <label htmlFor="search-maxPrice" className="mb-0.5 block text-xs font-medium text-slate-500">Jusqu'à</label>
+                        <input
+                          id="search-maxPrice"
+                          name="maxPrice"
+                          type="number"
+                          min={0}
+                          defaultValue={filters.maxPrice?.toString() ?? ""}
+                          placeholder="50000"
+                          className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-sky-300/60 focus:border-sky-300"
+                        />
+                      </div>
+                    </div>
+                  </div>
+                </details>
               </div>
               <div>
-                <label htmlFor="search-maxKm" className="mb-1 block text-xs font-medium text-slate-500">Kilométrage max</label>
-                <input
-                  id="search-maxKm"
-                  name="maxKm"
-                  type="number"
-                  min={0}
-                  defaultValue={filters.maxKm?.toString() ?? ""}
-                  placeholder="—"
-                  className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-sky-300/60 focus:border-sky-300"
-                />
+                <details
+                  open={!!(filters.minYear ?? filters.maxYear)}
+                  className="group rounded-xl border border-slate-200 bg-white focus-within:ring-2 focus-within:ring-sky-300/60 focus-within:border-sky-300"
+                >
+                  <summary className="flex cursor-pointer list-none items-center justify-between px-4 py-3 text-slate-600 hover:text-slate-900 [&::-webkit-details-marker]:hidden">
+                    <span className="text-xs font-medium text-slate-500 group-open:text-slate-700">
+                      Année
+                      {(filters.minYear ?? filters.maxYear) && (
+                        <span className="ml-1 font-medium text-slate-800">
+                          {filters.minYear ?? "…"} – {filters.maxYear ?? "…"}
+                        </span>
+                      )}
+                    </span>
+                    <svg className="h-4 w-4 shrink-0 text-slate-400 transition-transform group-open:rotate-180" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden>
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                    </svg>
+                  </summary>
+                  <div className="border-t border-slate-100 px-4 pb-3 pt-2">
+                    <div className="grid grid-cols-2 gap-2">
+                      <div>
+                        <label htmlFor="search-minYear" className="mb-0.5 block text-xs font-medium text-slate-500">De</label>
+                        <input
+                          id="search-minYear"
+                          name="minYear"
+                          type="number"
+                          min={1900}
+                          max={2100}
+                          defaultValue={filters.minYear?.toString() ?? ""}
+                          placeholder="2015"
+                          className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-sky-300/60 focus:border-sky-300"
+                        />
+                      </div>
+                      <div>
+                        <label htmlFor="search-maxYear" className="mb-0.5 block text-xs font-medium text-slate-500">Jusqu'à</label>
+                        <input
+                          id="search-maxYear"
+                          name="maxYear"
+                          type="number"
+                          min={1900}
+                          max={2100}
+                          defaultValue={filters.maxYear?.toString() ?? ""}
+                          placeholder="2024"
+                          className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-sky-300/60 focus:border-sky-300"
+                        />
+                      </div>
+                    </div>
+                  </div>
+                </details>
+              </div>
+              <div>
+                <details
+                  open={!!(filters.minKm ?? filters.maxKm)}
+                  className="group rounded-xl border border-slate-200 bg-white focus-within:ring-2 focus-within:ring-sky-300/60 focus-within:border-sky-300"
+                >
+                  <summary className="flex cursor-pointer list-none items-center justify-between px-4 py-3 text-slate-600 hover:text-slate-900 [&::-webkit-details-marker]:hidden">
+                    <span className="text-xs font-medium text-slate-500 group-open:text-slate-700">
+                      Kilométrage
+                      {(filters.minKm !== undefined || filters.maxKm !== undefined) && (
+                        <span className="ml-1 font-medium text-slate-800">
+                          {filters.minKm != null ? `${(filters.minKm / 1000).toFixed(0)}k` : "…"} – {filters.maxKm != null ? `${(filters.maxKm / 1000).toFixed(0)}k` : "…"} km
+                        </span>
+                      )}
+                    </span>
+                    <svg className="h-4 w-4 shrink-0 text-slate-400 transition-transform group-open:rotate-180" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden>
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                    </svg>
+                  </summary>
+                  <div className="border-t border-slate-100 px-4 pb-3 pt-2">
+                    <div className="grid grid-cols-2 gap-2">
+                      <div>
+                        <label htmlFor="search-minKm" className="mb-0.5 block text-xs font-medium text-slate-500">De (km)</label>
+                        <input
+                          id="search-minKm"
+                          name="minKm"
+                          type="number"
+                          min={0}
+                          defaultValue={filters.minKm?.toString() ?? ""}
+                          placeholder="0"
+                          className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-sky-300/60 focus:border-sky-300"
+                        />
+                      </div>
+                      <div>
+                        <label htmlFor="search-maxKm" className="mb-0.5 block text-xs font-medium text-slate-500">Jusqu'à (km)</label>
+                        <input
+                          id="search-maxKm"
+                          name="maxKm"
+                          type="number"
+                          min={0}
+                          defaultValue={filters.maxKm?.toString() ?? ""}
+                          placeholder="150000"
+                          className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-sky-300/60 focus:border-sky-300"
+                        />
+                      </div>
+                    </div>
+                  </div>
+                </details>
+              </div>
+              <div>
+                <details
+                  open={!!(filters.minPowerKw ?? filters.maxPowerKw)}
+                  className="group rounded-xl border border-slate-200 bg-white focus-within:ring-2 focus-within:ring-sky-300/60 focus-within:border-sky-300"
+                >
+                  <summary className="flex cursor-pointer list-none items-center justify-between px-4 py-3 text-slate-600 hover:text-slate-900 [&::-webkit-details-marker]:hidden">
+                    <span className="text-xs font-medium text-slate-500 group-open:text-slate-700">
+                      Puissance (kW)
+                      {(filters.minPowerKw !== undefined || filters.maxPowerKw !== undefined) && (
+                        <span className="ml-1 font-medium text-slate-800">
+                          {filters.minPowerKw ?? "…"} – {filters.maxPowerKw ?? "…"}
+                        </span>
+                      )}
+                    </span>
+                    <svg className="h-4 w-4 shrink-0 text-slate-400 transition-transform group-open:rotate-180" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden>
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                    </svg>
+                  </summary>
+                  <div className="border-t border-slate-100 px-4 pb-3 pt-2">
+                    <div className="grid grid-cols-2 gap-2">
+                      <div>
+                        <label htmlFor="search-minPowerKw" className="mb-0.5 block text-xs font-medium text-slate-500">De</label>
+                        <input
+                          id="search-minPowerKw"
+                          name="minPowerKw"
+                          type="number"
+                          min={0}
+                          defaultValue={filters.minPowerKw?.toString() ?? ""}
+                          placeholder="50"
+                          className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-sky-300/60 focus:border-sky-300"
+                        />
+                      </div>
+                      <div>
+                        <label htmlFor="search-maxPowerKw" className="mb-0.5 block text-xs font-medium text-slate-500">Jusqu'à</label>
+                        <input
+                          id="search-maxPowerKw"
+                          name="maxPowerKw"
+                          type="number"
+                          min={0}
+                          defaultValue={filters.maxPowerKw?.toString() ?? ""}
+                          placeholder="300"
+                          className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-sky-300/60 focus:border-sky-300"
+                        />
+                      </div>
+                    </div>
+                  </div>
+                </details>
               </div>
               <div>
                 <label htmlFor="search-gearbox" className="mb-1 block text-xs font-medium text-slate-500">Transmission</label>
@@ -414,7 +593,7 @@ export default async function ListingsPage({
               <span className="text-sky-600">+</span> Filtres avancés
             </summary>
             <div className="mt-4 pt-4 border-t border-slate-200/70 space-y-4">
-          <div className="grid gap-3 md:grid-cols-5">
+          <div className="grid gap-3 md:grid-cols-3">
             <select
               name="bodyType"
               defaultValue={filters.bodyTypeSlug ?? ""}
@@ -431,36 +610,6 @@ export default async function ListingsPage({
               name="city"
               defaultValue={filters.city ?? ""}
               placeholder="Ville"
-              className="w-full rounded-xl border border-slate-200 bg-white/85 px-4 py-3 text-slate-900 placeholder:text-slate-400 shadow-sm focus:outline-none focus:ring-2 focus:ring-sky-300/60 focus:border-sky-300"
-            />
-            <input
-              name="minPrice"
-              defaultValue={filters.minPrice?.toString() ?? ""}
-              inputMode="numeric"
-              placeholder="Prix min"
-              className="w-full rounded-xl border border-slate-200 bg-white/85 px-4 py-3 text-slate-900 placeholder:text-slate-400 shadow-sm focus:outline-none focus:ring-2 focus:ring-sky-300/60 focus:border-sky-300"
-            />
-            <input
-              name="minYear"
-              defaultValue={filters.minYear?.toString() ?? ""}
-              inputMode="numeric"
-              placeholder="Année min"
-              className="w-full rounded-xl border border-slate-200 bg-white/85 px-4 py-3 text-slate-900 placeholder:text-slate-400 shadow-sm focus:outline-none focus:ring-2 focus:ring-sky-300/60 focus:border-sky-300"
-            />
-            <input
-              name="maxYear"
-              defaultValue={filters.maxYear?.toString() ?? ""}
-              inputMode="numeric"
-              placeholder="Année max"
-              className="w-full rounded-xl border border-slate-200 bg-white/85 px-4 py-3 text-slate-900 placeholder:text-slate-400 shadow-sm focus:outline-none focus:ring-2 focus:ring-sky-300/60 focus:border-sky-300"
-            />
-          </div>
-          <div className="grid gap-3 md:grid-cols-6">
-            <input
-              name="maxKm"
-              defaultValue={filters.maxKm?.toString() ?? ""}
-              inputMode="numeric"
-              placeholder="Kilométrage max"
               className="w-full rounded-xl border border-slate-200 bg-white/85 px-4 py-3 text-slate-900 placeholder:text-slate-400 shadow-sm focus:outline-none focus:ring-2 focus:ring-sky-300/60 focus:border-sky-300"
             />
             <select
@@ -494,20 +643,6 @@ export default async function ListingsPage({
               <option value="other">Autres</option>
             </select>
 
-            <input
-              name="minPowerKw"
-              defaultValue={filters.minPowerKw?.toString() ?? ""}
-              inputMode="numeric"
-              placeholder="kW min"
-              className="w-full rounded-xl border border-slate-200 bg-white/85 px-4 py-3 text-slate-900 placeholder:text-slate-400 shadow-sm focus:outline-none focus:ring-2 focus:ring-sky-300/60 focus:border-sky-300"
-            />
-            <input
-              name="maxPowerKw"
-              defaultValue={filters.maxPowerKw?.toString() ?? ""}
-              inputMode="numeric"
-              placeholder="kW max"
-              className="w-full rounded-xl border border-slate-200 bg-white/85 px-4 py-3 text-slate-900 placeholder:text-slate-400 shadow-sm focus:outline-none focus:ring-2 focus:ring-sky-300/60 focus:border-sky-300"
-            />
             <input
               name="doors"
               defaultValue={filters.doors?.toString() ?? ""}

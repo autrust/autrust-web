@@ -1,11 +1,13 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
-import { CARVERTICAL_DISCOUNT_PERCENT, CARVERTICAL_ORIGINAL_PRICE_EUR, CARVERTICAL_PRICE_EUR } from "@/lib/constants";
+import { CARVERTICAL_DISCOUNT_PERCENT, CARVERTICAL_ORIGINAL_PRICE_EUR, CARVERTICAL_PRICE_EUR, LISTING_DESCRIPTION_MIN_LENGTH } from "@/lib/constants";
 import { CATEGORY_OPTIONS } from "@/lib/listings";
 import { SELLER_OPTION_GROUPS } from "@/lib/sellerOptions";
+import { MakeModelSearchFields } from "@/app/_components/MakeModelSearchFields";
+import { chToKw } from "@/lib/powerUtils";
 
 type VinDecoded = {
   vin: string;
@@ -56,9 +58,9 @@ export function SellForm() {
     | { status: "error"; message: string }
   >({ status: "idle" });
 
-  const [title, setTitle] = useState("");
   const [make, setMake] = useState("");
   const [model, setModel] = useState("");
+  const [customModelText, setCustomModelText] = useState("");
   const [displacementL, setDisplacementL] = useState("");
   const [mode, setMode] = useState<"sale" | "rent">("sale");
   const [category, setCategory] = useState("auto");
@@ -77,6 +79,7 @@ export function SellForm() {
   >("");
   const [gearbox, setGearbox] = useState<"" | "manual" | "automatic" | "semi-automatic">("");
   const [powerKw, setPowerKw] = useState("");
+  const [powerUnit, setPowerUnit] = useState<"kw" | "ch">("kw");
   const [doors, setDoors] = useState("");
   const [seats, setSeats] = useState("");
   const [hasServiceBook, setHasServiceBook] = useState(false);
@@ -186,6 +189,7 @@ export function SellForm() {
   const [photoUrls, setPhotoUrls] = useState<string[]>([]);
   const [photoBusy, setPhotoBusy] = useState(false);
   const [photoError, setPhotoError] = useState<string | null>(null);
+  const photoInputRef = useRef<HTMLInputElement>(null);
 
   async function uploadPhotos(files: FileList | null) {
     if (!files) return;
@@ -250,19 +254,18 @@ export function SellForm() {
       if (isGearboxSlug(v)) setGearbox(v);
     }
     if (!powerKw.trim()) {
-      const kw =
-        typeof data.engineKw === "number"
-          ? data.engineKw
-          : typeof data.engineHp === "number"
-            ? Math.round(data.engineHp * 0.7355)
-            : undefined;
-      if (kw) setPowerKw(String(kw));
+      if (typeof data.engineKw === "number") {
+        setPowerKw(String(data.engineKw));
+        setPowerUnit("kw");
+      } else if (typeof data.engineHp === "number") {
+        setPowerKw(String(data.engineHp));
+        setPowerUnit("ch");
+      }
     }
     if (!doors.trim() && typeof data.doors === "number") setDoors(String(data.doors));
     if (!seats.trim() && typeof data.seats === "number") setSeats(String(data.seats));
 
     // Auto-fill (on n’écrase pas ce que l’utilisateur a déjà rempli)
-    if (!title.trim() && data.suggestedTitle) setTitle(data.suggestedTitle);
     if (!make.trim() && data.make) setMake(data.make);
     if (!model.trim() && data.model) setModel(data.model);
     if (!displacementL.trim() && data.displacementL) setDisplacementL(data.displacementL ?? "");
@@ -300,9 +303,17 @@ export function SellForm() {
       });
       return;
     }
-    setState({ status: "submitting" });
-
     const fd = new FormData(e.currentTarget);
+    const desc = String(fd.get("description") ?? "").trim();
+    if (desc.length < LISTING_DESCRIPTION_MIN_LENGTH) {
+      setState({
+        status: "error",
+        message: `La description doit contenir au moins ${LISTING_DESCRIPTION_MIN_LENGTH} caractères (actuellement ${desc.length}).`,
+      });
+      return;
+    }
+
+    setState({ status: "submitting" });
 
     const vinDecoded = vinState.status === "success" ? vinState.data : undefined;
 
@@ -313,7 +324,14 @@ export function SellForm() {
       color: String(fd.get("color") ?? "") || undefined,
       fuel: String(fd.get("fuel") ?? "") || undefined,
       gearbox: String(fd.get("gearbox") ?? "") || undefined,
-      powerKw: String(fd.get("powerKw") ?? "") || undefined,
+      powerKw: (() => {
+        const raw = String(fd.get("powerKw") ?? "").trim();
+        if (!raw) return undefined;
+        const num = Number.parseFloat(raw);
+        if (!Number.isFinite(num)) return undefined;
+        const kw = powerUnit === "ch" ? chToKw(num) : num;
+        return Math.round(kw);
+      })(),
       doors: String(fd.get("doors") ?? "") || undefined,
       seats: String(fd.get("seats") ?? "") || undefined,
       hasServiceBook: Boolean(fd.get("hasServiceBook")),
@@ -322,9 +340,12 @@ export function SellForm() {
       isDamaged: Boolean(fd.get("isDamaged")),
       hasMinorDamage: Boolean(fd.get("hasMinorDamage")),
       hasCarVerticalVerification: hasCarVerticalVerification,
-      title: String(fd.get("title") ?? ""),
-      make: make.trim() || undefined,
-      model: model.trim() || undefined,
+      title: (() => {
+        const t = [make.trim(), model.trim(), year.trim()].filter(Boolean).join(" ").trim();
+        return t.length >= 8 ? t : mode === "rent" ? "Véhicule à louer" : "Véhicule à vendre";
+      })(),
+      make: (make === "other" ? "Autre" : make.trim()) || undefined,
+      model: (model === "other" ? customModelText.trim() : model.trim()) || undefined,
       displacementL: displacementL.trim() || undefined,
       category: String(fd.get("category") ?? ""),
       price: String(fd.get("price") ?? ""),
@@ -477,19 +498,6 @@ export function SellForm() {
 
       <div className="grid gap-3 md:grid-cols-2">
         <div>
-          <label className="text-sm text-slate-700">Titre</label>
-          <input
-            name="title"
-            required
-            minLength={8}
-            placeholder="Ex: Volkswagen Golf 7 1.6 TDI"
-            className="mt-2 w-full rounded-xl border border-slate-200 bg-white/85 px-4 py-3 text-slate-900 placeholder:text-slate-400 shadow-sm focus:outline-none focus:ring-2 focus:ring-sky-300/60 focus:border-sky-300"
-            value={title}
-            onChange={(e) => setTitle(e.target.value)}
-          />
-        </div>
-
-        <div>
           <label className="text-sm text-slate-700">Type d’annonce</label>
           <select
             name="mode"
@@ -517,37 +525,32 @@ export function SellForm() {
       </div>
 
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-        <div>
-          <label className="text-sm text-slate-700">Marque</label>
-          <input
-            name="make"
-            placeholder="Ex: Volkswagen, BMW"
-            className="mt-2 w-full rounded-xl border border-slate-200 bg-white/85 px-4 py-3 text-slate-900 placeholder:text-slate-400 shadow-sm focus:outline-none focus:ring-2 focus:ring-sky-300/60 focus:border-sky-300"
-            value={make}
-            onChange={(e) => setMake(e.target.value)}
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 lg:col-span-2">
+          <MakeModelSearchFields
+            make={make}
+            model={model}
+            onMakeChange={(v) => {
+              setMake(v);
+              setModel("");
+              setCustomModelText("");
+            }}
+            onModelChange={setModel}
+            category={category}
+            idPrefix="sell"
           />
         </div>
-        <div>
-          <label className="text-sm text-slate-700">Modèle</label>
-          <input
-            name="model"
-            placeholder="Ex: Golf 7, Série 3"
-            className="mt-2 w-full rounded-xl border border-slate-200 bg-white/85 px-4 py-3 text-slate-900 placeholder:text-slate-400 shadow-sm focus:outline-none focus:ring-2 focus:ring-sky-300/60 focus:border-sky-300"
-            value={model}
-            onChange={(e) => setModel(e.target.value)}
-          />
-        </div>
-        <div>
-          <label className="text-sm text-slate-700">Cylindrée (L)</label>
-          <input
-            name="displacementL"
-            placeholder="Ex: 1.6, 2.0"
-            className="mt-2 w-full rounded-xl border border-slate-200 bg-white/85 px-4 py-3 text-slate-900 placeholder:text-slate-400 shadow-sm focus:outline-none focus:ring-2 focus:ring-sky-300/60 focus:border-sky-300"
-            value={displacementL}
-            onChange={(e) => setDisplacementL(e.target.value)}
-          />
-          <div className="mt-1 text-xs text-slate-500">En litres (ex: 1.6 pour 1600 cm³)</div>
-        </div>
+        {model === "other" && (
+          <div>
+            <label className="text-sm text-slate-700">Précisez le modèle</label>
+            <input
+              type="text"
+              placeholder="Ex: Golf 7, Série 3…"
+              value={customModelText}
+              onChange={(e) => setCustomModelText(e.target.value)}
+              className="mt-2 w-full rounded-xl border border-slate-200 bg-white/85 px-4 py-3 text-slate-900 placeholder:text-slate-400 shadow-sm focus:outline-none focus:ring-2 focus:ring-sky-300/60 focus:border-sky-300"
+            />
+          </div>
+        )}
       </div>
 
       <div className="grid gap-3 md:grid-cols-2">
@@ -673,15 +676,26 @@ export function SellForm() {
 
       <div className="grid gap-3 md:grid-cols-5">
         <div>
-          <label className="text-sm text-slate-700">Puissance (kW)</label>
-          <input
-            name="powerKw"
-            inputMode="numeric"
-            placeholder="Ex: 85"
-            className="mt-2 w-full rounded-xl border border-slate-200 bg-white/85 px-4 py-3 text-slate-900 placeholder:text-slate-400 shadow-sm focus:outline-none focus:ring-2 focus:ring-sky-300/60 focus:border-sky-300"
-            value={powerKw}
-            onChange={(e) => setPowerKw(e.target.value)}
-          />
+          <label className="text-sm text-slate-700">Puissance (kW ou ch)</label>
+          <div className="mt-2 flex gap-2">
+            <input
+              name="powerKw"
+              inputMode="numeric"
+              placeholder={powerUnit === "kw" ? "Ex: 85" : "Ex: 115"}
+              className="flex-1 rounded-xl border border-slate-200 bg-white/85 px-4 py-3 text-slate-900 placeholder:text-slate-400 shadow-sm focus:outline-none focus:ring-2 focus:ring-sky-300/60 focus:border-sky-300"
+              value={powerKw}
+              onChange={(e) => setPowerKw(e.target.value)}
+            />
+            <select
+              aria-label="Unité puissance"
+              value={powerUnit}
+              onChange={(e) => setPowerUnit(e.target.value as "kw" | "ch")}
+              className="w-16 rounded-xl border border-slate-200 bg-white/85 px-2 py-3 text-slate-900 shadow-sm focus:outline-none focus:ring-2 focus:ring-sky-300/60 focus:border-sky-300"
+            >
+              <option value="kw">kW</option>
+              <option value="ch">ch</option>
+            </select>
+          </div>
         </div>
         <div>
           <label className="text-sm text-slate-700">Portes</label>
@@ -894,13 +908,16 @@ export function SellForm() {
         <textarea
           name="description"
           required
-          minLength={20}
+          minLength={LISTING_DESCRIPTION_MIN_LENGTH}
           rows={7}
           placeholder="État, entretien, options, défauts, etc."
           className="mt-2 w-full rounded-xl border border-slate-200 bg-white/85 px-4 py-3 text-slate-900 placeholder:text-slate-400 shadow-sm focus:outline-none focus:ring-2 focus:ring-sky-300/60 focus:border-sky-300"
           value={description}
           onChange={(e) => setDescription(e.target.value)}
         />
+        <p className="mt-1 text-xs text-slate-500">
+          Minimum {LISTING_DESCRIPTION_MIN_LENGTH} caractères.
+        </p>
       </div>
 
       <div className="rounded-3xl border border-slate-200/70 bg-white/75 p-6 shadow-sm backdrop-blur">
@@ -979,16 +996,43 @@ export function SellForm() {
       <div>
         <label className="text-sm text-slate-700">Photos (jusqu’à 15) — optionnel</label>
         <input
+          ref={photoInputRef}
           type="file"
           accept="image/*"
           multiple
           disabled={photoBusy}
-          onChange={(e) => uploadPhotos(e.target.files)}
-          className="mt-2 block w-full text-sm"
+          onChange={(e) => {
+            uploadPhotos(e.target.files);
+            e.target.value = "";
+          }}
+          className="sr-only"
+          aria-hidden="true"
         />
-        <div className="mt-1 text-xs text-slate-500">
-          Tu peux importer directement depuis ton téléphone/PC. (MVP: stockage local)
-        </div>
+        <button
+          type="button"
+          onClick={() => photoInputRef.current?.click()}
+          onDragOver={(e) => {
+            e.preventDefault();
+            e.currentTarget.classList.add("ring-2", "ring-sky-400", "bg-sky-50");
+          }}
+          onDragLeave={(e) => {
+            e.preventDefault();
+            e.currentTarget.classList.remove("ring-2", "ring-sky-400", "bg-sky-50");
+          }}
+          onDrop={(e) => {
+            e.preventDefault();
+            e.currentTarget.classList.remove("ring-2", "ring-sky-400", "bg-sky-50");
+            if (!photoBusy && e.dataTransfer.files.length) uploadPhotos(e.dataTransfer.files);
+          }}
+          disabled={photoBusy}
+          className="mt-2 flex w-full flex-col items-center justify-center rounded-xl border-2 border-dashed border-slate-300 bg-slate-50/80 py-8 text-slate-600 transition hover:border-sky-400 hover:bg-sky-50/50 disabled:opacity-60 disabled:pointer-events-none"
+        >
+          <span className="text-3xl" aria-hidden>📷</span>
+          <span className="mt-2 text-sm font-medium text-slate-700">
+            {photoBusy ? "Envoi en cours…" : "Cliquez ici ou déposez vos photos"}
+          </span>
+          <span className="mt-1 text-xs text-slate-500">Jusqu'à 15 images</span>
+        </button>
 
         {photoError ? <div className="mt-2 text-sm text-red-700">{photoError}</div> : null}
 

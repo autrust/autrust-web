@@ -18,6 +18,18 @@ Ensuite : dans Supabase, exécute **une seule fois** `npx prisma db push` en loc
 
 ---
 
+## ✅ Avant de mettre en ligne (checklist)
+
+- [ ] **Variables d'environnement** : `DATABASE_URL`, `APP_URL`, `NEXT_PUBLIC_APP_URL`, `STRIPE_*` (voir ci-dessous).
+- [ ] **Mentions légales** : Remplacer les placeholders dans `lib/legal-content.ts` (ou via surcharge) : numéro BCE, TVA, adresse, contact (contact@autrust.eu), hébergeur, date d'entrée en vigueur. Les textes utilisent `[[BE0XXX.XXX.XXX]]`, `[[Adresse complète]]`, etc.
+- [ ] **Stripe** : Clés live + webhook configuré sur l’URL de production (`/api/webhooks/stripe` ou `/api/stripe/webhook`).
+- [ ] **Photos** : Les uploads vont dans `public/uploads` (fichiers locaux). En production Vercel, le système de fichiers est éphémère — prévoir un stockage persistant (S3, Supabase Storage, etc.) si tu veux conserver les photos après déploiement.
+- [ ] **Page Contact** : La page `/contact` existe et envoie les messages vers l’API « signaler un problème » (visible dans l’admin).
+- [ ] **Rate limiting** : Déjà actif en mémoire sur login, register, OTP, upload. Pour une grosse charge, envisager Redis (ex. Upstash) comme indiqué dans `SECURITY.md`.
+- [ ] **Cloudflare** (recommandé) : Mettre Cloudflare devant autrust.be pour WAF, DDoS, rate limit, Turnstile, firewall et logs. Voir `docs/CLOUDFLARE_SETUP.md`. Env optionnels : `NEXT_PUBLIC_TURNSTILE_SITE_KEY`, `TURNSTILE_SECRET_KEY`.
+
+---
+
 ## 📋 Prérequis
 
 - Un compte GitHub (pour versionner le code)

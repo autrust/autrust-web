@@ -2,11 +2,13 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { prisma } from "@/lib/db";
 import { createSession, hashPassword, isPasswordStrongEnough } from "@/lib/auth";
+import { verifyTurnstileToken } from "@/lib/turnstile";
 import { randomBytes, createHash } from "node:crypto";
 
 const RegisterSchema = z.object({
   email: z.string().email().transform((s) => s.trim().toLowerCase()),
   password: z.string().min(8),
+  turnstileToken: z.string().max(2048).optional(),
 });
 
 function sha256Hex(input: string) {
@@ -20,7 +22,16 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "INVALID_INPUT" }, { status: 400 });
   }
 
-  const { email, password } = parsed.data;
+  const { email, password, turnstileToken } = parsed.data;
+  const forwarded = req.headers.get("x-forwarded-for");
+  const remoteIp = forwarded?.split(",")[0]?.trim() ?? req.headers.get("x-real-ip") ?? undefined;
+  const turnstile = await verifyTurnstileToken(turnstileToken, remoteIp);
+  if (!turnstile.success) {
+    return NextResponse.json(
+      { error: "TURNSTILE_FAILED", message: "Vérification anti-robot échouée. Réessayez." },
+      { status: 400 }
+    );
+  }
   if (!isPasswordStrongEnough(password)) {
     return NextResponse.json({ error: "WEAK_PASSWORD" }, { status: 400 });
   }

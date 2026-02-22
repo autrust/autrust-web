@@ -15,6 +15,7 @@ import { SimilarListings } from "@/app/_components/SimilarListings";
 import { ContactSellerForm } from "@/app/_components/ContactSellerForm";
 import { toListingCardModelFromDb } from "@/lib/listingsDb";
 import { computeTrustScore } from "@/lib/trustScore";
+import { formatPower } from "@/lib/powerUtils";
 
 export const dynamic = "force-dynamic";
 
@@ -296,7 +297,7 @@ export default async function ListingDetail({
           ) : null}
           {listing.powerKw ? (
             <span className="rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1 text-xs text-emerald-800">
-              Puissance: {listing.powerKw} kW
+              Puissance: {formatPower(listing.powerKw)}
             </span>
           ) : null}
           {listing.doors ? (
@@ -457,8 +458,7 @@ export default async function ListingDetail({
         listing.driveType ||
         listing.engineCylinders ||
         listing.engineHp ||
-        listing.engineModel ||
-        listing.displacementL ? (
+        listing.engineModel ? (
           <div className="mt-6 rounded-2xl border border-slate-200/70 bg-white/75 p-5 shadow-sm backdrop-blur">
             <div className="text-sm font-semibold">Fiche véhicule (VIN)</div>
             <div className="mt-3 grid gap-3 sm:grid-cols-2 text-sm text-slate-700">
@@ -562,14 +562,15 @@ export default async function ListingDetail({
                 </div>
               ) : null}
 
-              {listing.engineHp ? (
+              {(listing.powerKw ?? listing.engineHp) ? (
                 <div>
                   <div className="text-xs text-slate-500">Puissance</div>
                   <div className="font-medium">
-                    {listing.engineHp} ch (VIN){" "}
-                    <span className="text-slate-500">
-                      (~{Math.round(listing.engineHp * 0.7355)} kW)
-                    </span>
+                    {listing.powerKw
+                      ? formatPower(listing.powerKw)
+                      : listing.engineHp
+                        ? `${listing.engineHp} ch (VIN) (~${Math.round(listing.engineHp * 0.7355)} kW)`
+                        : ""}
                   </div>
                 </div>
               ) : null}
@@ -581,12 +582,6 @@ export default async function ListingDetail({
                 </div>
               ) : null}
 
-              {listing.displacementL ? (
-                <div>
-                  <div className="text-xs text-slate-500">Cylindrée</div>
-                  <div className="font-medium">{listing.displacementL} L</div>
-                </div>
-              ) : null}
 
               {listing.plantCountry || listing.plantCity ? (
                 <div className="sm:col-span-2">

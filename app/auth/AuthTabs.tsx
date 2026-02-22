@@ -4,6 +4,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { useCallback } from "react";
 import { LoginForm } from "@/app/login/LoginForm";
 import { RegisterForm } from "@/app/register/RegisterForm";
+import { isSafeRedirectPath } from "@/lib/sanitize";
 
 type Tab = "login" | "signup";
 
@@ -13,7 +14,7 @@ export function AuthTabs() {
   const tab = (searchParams.get("tab") === "signup" ? "signup" : "login") as Tab;
   const next = searchParams.get("next") ?? undefined;
 
-  const redirectTo = next && next.startsWith("/") && !next.startsWith("//") ? next : "/account";
+  const redirectTo = isSafeRedirectPath(next) ? next : "/account";
 
   const setTab = useCallback(
     (newTab: Tab) => {

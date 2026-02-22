@@ -92,9 +92,7 @@ export function ListingCard({
         <div className={`${compact ? "mt-1 text-[10px]" : "mt-2"} text-slate-600`}>
           {formatPriceEUR(listing.price)}
           {isRent ? " / jour" : ""} • {listing.year} •{" "}
-          {listing.km.toLocaleString("fr-BE")} km
-          {listing.displacementL ? ` • ${listing.displacementL} L` : ""}
-          {" • "}{listing.city}
+          {listing.km.toLocaleString("fr-BE")} km • {listing.city}
         </div>
       </div>
     </Link>

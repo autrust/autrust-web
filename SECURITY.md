@@ -25,34 +25,27 @@ Ce document décrit les mesures de sécurité mises en place et les bonnes prati
 - ✅ Stockage séparé pour fichiers sensibles (KYC)
 
 ### 4. API & Rate Limiting
-- ⚠️ **À IMPLÉMENTER** : Rate limiting sur les endpoints sensibles
-- ✅ Validation stricte des entrées
+- ✅ Rate limiting (middleware) : login (5/15 min), register (3/h), OTP (3/h), photos (10/h), listings (15/h), contact (5/15 min), checkouts (10–30/h)
+- ✅ POST JSON-only : Content-Type `application/json` requis sur login, register, problem-report, plans/change (réduit la surface CSRF)
+- ✅ Validation stricte des entrées (Zod)
 - ✅ Gestion d'erreurs sans exposition de détails
 
 ## 🛡️ Mesures à Implémenter
 
-### 1. Rate Limiting (Priorité Haute)
+### 1. Rate Limiting (Priorité Moyenne — déjà en place en mémoire)
 
-Installer `@upstash/ratelimit` ou utiliser un middleware Next.js :
+En production à forte charge, remplacer le rate limiting en mémoire par **Upstash Redis** :
 
 ```bash
 npm install @upstash/ratelimit @upstash/redis
 ```
 
-Protéger les endpoints sensibles :
-- `/api/auth/login` : 5 tentatives / 15 min
-- `/api/auth/register` : 3 inscriptions / heure
-- `/api/auth/phone/send-otp` : 3 envois / heure
-- `/api/photos/upload` : 10 uploads / heure
+Déjà protégé en mémoire : login, register, OTP, photos, listings, problem-report, deposits/sponsor/plans/reports checkout.
 
 ### 2. Headers de Sécurité
 
-Ajouter dans `next.config.ts` :
-- `Content-Security-Policy`
-- `X-Frame-Options`
-- `X-Content-Type-Options`
-- `Referrer-Policy`
-- `Permissions-Policy`
+- ✅ **Déjà en place** (middleware) : CSP, X-Frame-Options, X-Content-Type-Options, Referrer-Policy, Permissions-Policy, HSTS en production
+- Optionnel : doublon dans `next.config.ts` si besoin
 
 ### 3. Protection CSRF
 
@@ -60,10 +53,10 @@ Pour les formulaires critiques (paiements, modifications), ajouter des tokens CS
 
 ### 4. Validation Renforcée
 
-- Sanitization HTML pour les descriptions
-- Validation stricte des emails
-- Validation des numéros de téléphone
-- Limitation de la longueur des champs
+- ✅ Sanitization HTML (lib/sanitize.ts, sanitize-html) : descriptions, titre, contact, message contact, etc. — aucun tag autorisé
+- ✅ Redirections auth : `isSafeRedirectPath()` pour éviter les open redirects (paramètre `?next=`)
+- Validation stricte des emails et numéros de téléphone (Zod)
+- Limitation de la longueur des champs (Zod)
 
 ### 5. Monitoring & Logging
 
@@ -101,15 +94,28 @@ En production, forcer HTTPS via :
 ### 10. Protection XSS
 
 - ✅ React échappe automatiquement le contenu
-- ⚠️ Attention aux `dangerouslySetInnerHTML` (ne pas utiliser)
-- ⚠️ Sanitizer pour les descriptions utilisateur
+- ✅ Sanitization côté serveur (sanitizeText) pour annonces et formulaire contact
+- ⚠️ Ne pas utiliser `dangerouslySetInnerHTML` avec du contenu utilisateur
 
-## 📋 Checklist de Sécurité
+## AppSec — Checklist des 10 règles (référence)
+
+| # | Règle | Statut | Notes |
+|---|--------|--------|-------|
+| 1 | Zéro secret dans le repo | ✅ | .env + Vercel ; pas de Supabase client (Prisma seul) |
+| 2 | Accès données / RLS | ⚠️ | Contrôle app (requireUser, ownership) ; RLS Postgres à ajouter si BDD Supabase |
+| 3 | Validation serveur (Zod) | ✅ | Entrées API validées ; sanitization annonces/contact |
+| 4 | Auth (verif email, rate limit, re-auth) | ✅/⚠️ | Email/phone verif pour actions sensibles ; rate limit ; re-auth manquante pour IBAN/suppression |
+| 5 | Upload (privé, signé, limites) | ✅/⚠️ | MIME/taille/nombre/UUID ; stockage local (public/uploads) — pas de buckets privés |
+| 6 | XSS/CSRF, cookies | ✅ | Pas dangerouslySetInnerHTML ; sanitize ; cookies sécurisés |
+| 7 | Headers (CSP, HSTS, etc.) | ✅ | Middleware |
+| 8 | Logging/Audit | ❌ | À mettre en place (admin, paiement, annonce, IBAN) |
+| 9 | Anti-abus (rate limit + bot) | ✅ | Rate limit + Turnstile (login, signup, contact, signalement) si clés configurées |
+| 10 | Paiements (Stripe, webhooks signés) | ✅ | Stripe uniquement ; signatures vérifiées |
 
 ### Avant la Mise en Production
 
-- [ ] Rate limiting implémenté
-- [ ] Headers de sécurité configurés
+- [x] Rate limiting implémenté (middleware)
+- [x] Headers de sécurité configurés (middleware)
 - [ ] HTTPS forcé
 - [ ] Variables d'environnement sécurisées
 - [ ] Secrets différents dev/prod

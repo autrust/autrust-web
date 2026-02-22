@@ -150,6 +150,19 @@ model SavedSearch {
   @@index([userId, createdAt])
 }
 
+// Compteur de recherches (marque ou modèle) pour proposer "Autre" fréquemment recherchés
+model SearchTermCount {
+  id        String   @id @default(cuid())
+  type      String   // "make" | "model"
+  value     String   // ex: "Tesla" ou "Golf"
+  make      String   @default("") // pour type "model" : marque concernée ; "" pour type "make"
+  count     Int      @default(0)
+  updatedAt DateTime @updatedAt
+
+  @@unique([type, value, make])
+  @@index([type, count])
+}
+
 model Rating {
   id        String   @id @default(cuid())
   createdAt DateTime @default(now())

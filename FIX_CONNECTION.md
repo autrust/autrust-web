@@ -34,11 +34,13 @@ Cela ouvrira Prisma Studio et tu devrais voir toutes les tables.
 
 ### Vérifier le mot de passe
 
-Le mot de passe dans `.env` doit être correctement encodé. Si ton mot de passe est `[Stephanedu4430-]`, l'URL devrait être :
+Le mot de passe dans `.env` doit être correctement encodé. Les caractères spéciaux (ex. `[`, `]`) sont encodés en URL : `[` → `%5B`, `]` → `%5D`. Exemple avec un mot de passe **factice** :
 
 ```env
-DATABASE_URL="postgresql://postgres:%5BStephanedu4430-%5D@db.tlpppjxnygvanktayulg.supabase.co:5432/postgres?schema=public"
+DATABASE_URL="postgresql://postgres:TON_MOT_DE_PASSE_ENCODE@db.TON_PROJECT_REF.supabase.co:5432/postgres?schema=public"
 ```
+
+Ne jamais commiter une URL contenant un vrai mot de passe.
 
 ### Vérifier la connection string dans Supabase
 

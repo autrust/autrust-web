@@ -13,9 +13,14 @@ export function ActiveFiltersBar() {
   const city = searchParams.get("city");
   const make = searchParams.get("make");
   const model = searchParams.get("model");
+  const minPrice = searchParams.get("minPrice");
   const maxPrice = searchParams.get("maxPrice");
   const minYear = searchParams.get("minYear");
+  const maxYear = searchParams.get("maxYear");
+  const minKm = searchParams.get("minKm");
   const maxKm = searchParams.get("maxKm");
+  const minPowerKw = searchParams.get("minPowerKw");
+  const maxPowerKw = searchParams.get("maxPowerKw");
   const gearbox = searchParams.get("gearbox");
   const country = searchParams.get("country");
   const electric = searchParams.get("electric");
@@ -63,16 +68,33 @@ export function ActiveFiltersBar() {
     activeFilters.push({ key: "model", label: `Modèle: ${model}`, value: model });
   }
 
+  if (minPrice) {
+    activeFilters.push({ key: "minPrice", label: `Prix à partir de: ${minPrice} €`, value: minPrice });
+  }
   if (maxPrice) {
-    activeFilters.push({ key: "maxPrice", label: `Prix max: ${maxPrice} €`, value: maxPrice });
+    activeFilters.push({ key: "maxPrice", label: `Prix jusqu'à: ${maxPrice} €`, value: maxPrice });
   }
 
   if (minYear) {
-    activeFilters.push({ key: "minYear", label: `Année min: ${minYear}`, value: minYear });
+    activeFilters.push({ key: "minYear", label: `Année de: ${minYear}`, value: minYear });
   }
 
+  if (maxYear) {
+    activeFilters.push({ key: "maxYear", label: `Année jusqu'à: ${maxYear}`, value: maxYear });
+  }
+
+  if (minKm) {
+    activeFilters.push({ key: "minKm", label: `Km à partir de: ${minKm}`, value: minKm });
+  }
   if (maxKm) {
-    activeFilters.push({ key: "maxKm", label: `Km max: ${maxKm}`, value: maxKm });
+    activeFilters.push({ key: "maxKm", label: `Km jusqu'à: ${maxKm}`, value: maxKm });
+  }
+
+  if (minPowerKw) {
+    activeFilters.push({ key: "minPowerKw", label: `Puissance à partir de: ${minPowerKw} kW`, value: minPowerKw });
+  }
+  if (maxPowerKw) {
+    activeFilters.push({ key: "maxPowerKw", label: `Puissance jusqu'à: ${maxPowerKw} kW`, value: maxPowerKw });
   }
 
   if (gearbox) {
