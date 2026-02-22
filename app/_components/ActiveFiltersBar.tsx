@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter, useSearchParams } from "next/navigation";
-import { CATEGORY_OPTIONS, BODY_TYPE_OPTIONS } from "@/lib/listings";
+import { CATEGORY_OPTIONS, BODY_TYPE_OPTIONS, COUNTRY_OPTIONS } from "@/lib/listings";
 
 export function ActiveFiltersBar() {
   const router = useRouter();
@@ -12,6 +12,14 @@ export function ActiveFiltersBar() {
   const bodyType = searchParams.get("bodyType");
   const city = searchParams.get("city");
   const make = searchParams.get("make");
+  const model = searchParams.get("model");
+  const maxPrice = searchParams.get("maxPrice");
+  const minYear = searchParams.get("minYear");
+  const maxKm = searchParams.get("maxKm");
+  const gearbox = searchParams.get("gearbox");
+  const country = searchParams.get("country");
+  const electric = searchParams.get("electric");
+  const fuel = searchParams.get("fuel");
   const radiusKm = searchParams.get("radiusKm");
   const registered = searchParams.get("registered");
   const minRegistrationYear = searchParams.get("minRegistrationYear");
@@ -44,7 +52,42 @@ export function ActiveFiltersBar() {
   }
 
   if (make) {
-    activeFilters.push({ key: "make", label: make, value: make });
+    activeFilters.push({
+      key: "make",
+      label: `Marque: ${make === "other" ? "Autre" : make}`,
+      value: make,
+    });
+  }
+
+  if (model) {
+    activeFilters.push({ key: "model", label: `Modèle: ${model}`, value: model });
+  }
+
+  if (maxPrice) {
+    activeFilters.push({ key: "maxPrice", label: `Prix max: ${maxPrice} €`, value: maxPrice });
+  }
+
+  if (minYear) {
+    activeFilters.push({ key: "minYear", label: `Année min: ${minYear}`, value: minYear });
+  }
+
+  if (maxKm) {
+    activeFilters.push({ key: "maxKm", label: `Km max: ${maxKm}`, value: maxKm });
+  }
+
+  if (gearbox) {
+    const gearboxLabel =
+      gearbox === "manual" ? "Manuelle" : gearbox === "automatic" ? "Automatique" : gearbox === "semi-automatic" ? "Semi-auto" : gearbox;
+    activeFilters.push({ key: "gearbox", label: gearboxLabel, value: gearbox });
+  }
+
+  if (country) {
+    const countryLabel = COUNTRY_OPTIONS.find((c) => c.code === country)?.label ?? country;
+    activeFilters.push({ key: "country", label: countryLabel, value: country });
+  }
+
+  if (electric || fuel === "electric") {
+    activeFilters.push({ key: "electric", label: "100% électrique", value: "1" });
   }
 
   if (radiusKm) {

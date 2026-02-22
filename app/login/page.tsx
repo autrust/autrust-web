@@ -4,7 +4,7 @@ export const metadata = {
   title: "Connexion",
 };
 
-export default function LoginPage({
+export default async function LoginPage({
   searchParams,
 }: {
   searchParams: Promise<{ redirect?: string; next?: string }>;

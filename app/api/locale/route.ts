@@ -8,11 +8,11 @@ export async function POST(req: Request) {
   let locale: Locale = "fr";
   if (contentType.includes("application/json")) {
     const body = await req.json().catch(() => ({}));
-    locale = body.locale === "en" || body.locale === "fr" ? body.locale : "fr";
+    locale = body.locale === "en" || body.locale === "fr" || body.locale === "nl" || body.locale === "de" ? body.locale : "fr";
   } else {
     const form = await req.formData().catch(() => null);
     const l = form?.get("locale");
-    if (l === "en" || l === "fr") locale = l;
+    if (l === "en" || l === "fr" || l === "nl" || l === "de") locale = l;
   }
 
   const referer = req.headers.get("referer");

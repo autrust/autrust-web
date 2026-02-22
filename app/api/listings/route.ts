@@ -71,6 +71,7 @@ const CreateListingSchema = z.object({
   isNonSmoker: z.coerce.boolean().optional(),
   hasWarranty: z.coerce.boolean().optional(),
   isDamaged: z.coerce.boolean().optional(),
+  hasMinorDamage: z.coerce.boolean().optional(),
   hasCarVerticalVerification: z.coerce.boolean().optional(),
   title: z.string().min(8),
   description: z.string().min(20),
@@ -79,6 +80,7 @@ const CreateListingSchema = z.object({
   year: z.coerce.number().int().min(1900).max(2100),
   km: z.coerce.number().int().nonnegative(),
   city: z.string().min(2),
+  country: z.string().trim().max(10).optional(),
   contactName: z.string().trim().min(2).max(80).optional(),
   contactPhone: z.string().trim().min(6).max(30).optional(),
   contactEmail: z.string().email().optional(),
@@ -89,6 +91,9 @@ const CreateListingSchema = z.object({
   firstRegistrationDate: z
     .union([z.string().regex(/^\d{4}-\d{2}-\d{2}$/), z.null()])
     .optional(),
+  make: z.string().trim().max(80).optional(),
+  model: z.string().trim().max(120).optional(),
+  displacementL: z.string().trim().max(20).optional(),
 });
 
 function toDbMode(input: z.infer<typeof ListingModeSchema> | undefined) {
@@ -296,6 +301,7 @@ export async function POST(req: Request) {
     data: {
       manageToken: randomUUID(),
       sellerId: dbUser.id,
+      status: "DRAFT",
       title: data.title,
       description: data.description,
       category: toDbCategory(data.category),
@@ -304,6 +310,7 @@ export async function POST(req: Request) {
       year: data.year,
       km: data.km,
       city: data.city,
+      country: data.country ?? undefined,
       bodyType: toDbBodyType(data.bodyType),
       color: data.color,
       fuel: toDbFuel(data.fuel),
@@ -315,6 +322,7 @@ export async function POST(req: Request) {
       isNonSmoker: data.isNonSmoker ?? false,
       hasWarranty: data.hasWarranty ?? false,
       isDamaged: data.isDamaged ?? false,
+      hasMinorDamage: data.hasMinorDamage ?? false,
       hasCarVerticalVerification: data.hasCarVerticalVerification ?? false,
       sellerOptions: data.sellerOptions
         ? (data.sellerOptions as unknown as Prisma.InputJsonValue)
@@ -328,10 +336,11 @@ export async function POST(req: Request) {
         data.firstRegistrationDate != null && data.firstRegistrationDate !== ""
           ? new Date(data.firstRegistrationDate)
           : null,
+      make: data.make ?? (decoded && decodedMatchesVin ? decoded.make : undefined),
+      model: data.model ?? (decoded && decodedMatchesVin ? decoded.model : undefined),
+      displacementL: data.displacementL ?? (decoded && decodedMatchesVin ? decoded.displacementL : undefined),
       ...(decoded && decodedMatchesVin
         ? {
-            make: decoded.make,
-            model: decoded.model,
             trim: decoded.trim,
             bodyClass: decoded.bodyClass,
             vehicleType: decoded.vehicleType,
@@ -343,7 +352,6 @@ export async function POST(req: Request) {
             engineCylinders: decoded.engineCylinders,
             engineHp: decoded.engineHp,
             engineModel: decoded.engineModel,
-            displacementL: decoded.displacementL,
             plantCountry: decoded.plantCountry,
             plantCity: decoded.plantCity,
             manufacturer: decoded.manufacturer,

@@ -12,9 +12,9 @@ export async function SiteHeader({ locale }: { locale: Locale }) {
   const user = await getCurrentUser();
   const t = getTranslations(locale);
   return (
-    <header className="sticky top-0 z-10 border-b border-slate-200/70 bg-white/75 backdrop-blur">
+    <header className="sticky top-0 z-50 isolate border-b border-slate-200/70 bg-white shadow-sm">
       <Link href="/" className="block w-full bg-white">
-        <div className="relative w-full overflow-hidden" style={{ height: '5cm' }}>
+        <div className="relative w-full overflow-hidden bg-white isolate" style={{ height: '5cm' }}>
           <video
             autoPlay
             loop
@@ -34,7 +34,7 @@ export async function SiteHeader({ locale }: { locale: Locale }) {
         </div>
       </Link>
 
-      <div className="border-t border-slate-200/70 bg-white/80 backdrop-blur">
+      <div className="border-t border-slate-200/70 bg-white">
         <div className="mx-auto max-w-6xl px-6 py-2">
           <p className="text-center text-xs text-slate-500 mb-2">
             {t.common.verifiedSecureCertified}
@@ -48,10 +48,10 @@ export async function SiteHeader({ locale }: { locale: Locale }) {
                   { href: "/pourquoi-autrust", label: t.menu.whyAuTrust },
                   { href: "/securite-verification", label: t.menu.securityVerification },
                   { href: "/tarifs", label: t.common.pricing },
-                  { href: "/listings", label: t.common.buy },
-                  { href: "/location", label: t.common.rent },
+                  { action: "buyRent", labelBuy: t.common.buy, labelRent: t.common.rent },
                   { href: "/garages", label: t.menu.garages },
                   { href: "/sell", label: t.common.postAd },
+                  { action: "chatAide", labelChat: t.common.chat, labelAide: t.common.help },
                 ]}
                 openMenuAria={t.menu.openMenu}
                 currentLocale={locale}
@@ -71,7 +71,7 @@ export async function SiteHeader({ locale }: { locale: Locale }) {
                 />
               </span>
               <Suspense fallback={<span className="text-xs text-slate-300">...</span>}>
-                <TotalVehiclesCount />
+                <TotalVehiclesCount locale={locale} />
               </Suspense>
             </Link>
             </div>

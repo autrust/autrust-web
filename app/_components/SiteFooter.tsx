@@ -1,7 +1,9 @@
 import Link from "next/link";
 import type { Locale } from "@/lib/locale";
+import { LEGAL_ROUTES } from "@/lib/legal-content";
 import { getTranslations } from "@/lib/translations";
 import { LanguageSwitcher } from "./LanguageSwitcher";
+import { ReportProblemButton } from "./ReportProblemButton";
 import { ScrollToTop } from "./ScrollToTop";
 
 export function SiteFooter({ locale }: { locale: Locale }) {
@@ -25,10 +27,10 @@ export function SiteFooter({ locale }: { locale: Locale }) {
               <ul className="space-y-2.5 text-sm text-slate-600">
                 <li><Link href="/pourquoi-autrust" className="hover:text-slate-900 underline underline-offset-2">{t.footer.about}</Link></li>
                 <li><Link href="/pourquoi-autrust" className="hover:text-slate-900 underline underline-offset-2">{t.footer.press}</Link></li>
-                <li><Link href="/conditions-generales" className="hover:text-slate-900 underline underline-offset-2">{t.footer.terms}</Link></li>
-                <li><Link href="/mentions-legales" className="hover:text-slate-900 underline underline-offset-2">{t.footer.legal}</Link></li>
-                <li><Link href="/confidentialite" className="hover:text-slate-900 underline underline-offset-2">{t.footer.privacy}</Link></li>
-                <li><Link href="/accessibilite" className="hover:text-slate-900 underline underline-offset-2">{t.footer.accessibility}</Link></li>
+                <li><Link href={LEGAL_ROUTES.termsPrivate} className="hover:text-slate-900 underline underline-offset-2">{t.footer.terms}</Link></li>
+                <li><Link href={LEGAL_ROUTES.legalNotice} className="hover:text-slate-900 underline underline-offset-2">{t.footer.legal}</Link></li>
+                <li><Link href={LEGAL_ROUTES.privacy} className="hover:text-slate-900 underline underline-offset-2">{t.footer.privacy}</Link></li>
+                <li><Link href={LEGAL_ROUTES.accessibility} className="hover:text-slate-900 underline underline-offset-2">{t.footer.accessibility}</Link></li>
               </ul>
             </nav>
 
@@ -72,6 +74,8 @@ export function SiteFooter({ locale }: { locale: Locale }) {
               <Link href="/contact" className="hover:text-slate-900 underline underline-offset-2">{t.footer.contactUs}</Link>
               {" · "}
               <Link href="/comment-ca-marche" className="hover:text-slate-900 underline underline-offset-2">{t.footer.howItWorks}</Link>
+              {" · "}
+              <ReportProblemButton />
             </p>
             {/* Social */}
             <div className="mt-4 flex items-center gap-3">

@@ -1,5 +1,6 @@
 import type { MetadataRoute } from "next";
 import { getSiteUrl } from "@/lib/siteUrl";
+import { LEGAL_ROUTES } from "@/lib/legal-content";
 import { prisma } from "@/lib/db";
 
 export const dynamic = "force-dynamic";
@@ -33,6 +34,12 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       changeFrequency: "daily",
       priority: 0.9,
     },
+    ...Object.values(LEGAL_ROUTES).map((path) => ({
+      url: `${base}${path}`,
+      lastModified: new Date(),
+      changeFrequency: "monthly" as const,
+      priority: 0.3,
+    })),
   ];
 
   const listings = await prisma.listing

@@ -28,6 +28,15 @@ export type AdminStats = {
   totalGarages: number;
   totalAlerts: number;
   recentFeedbacks: number;
+  problemReportsCount: number;
+};
+
+export type ProblemReportRow = {
+  id: string;
+  message: string;
+  email: string | null;
+  pageUrl: string | null;
+  createdAt: string;
 };
 
 const OWNER_EMAILS = ["candel.s@hotmail.fr", "candel.pro@hotmail.com"];
@@ -36,10 +45,12 @@ export function AdminTabs({
   stats,
   garages,
   ownerEmail,
+  recentProblems = [],
 }: {
   stats: AdminStats;
   garages: GarageRow[];
   ownerEmail?: string | null;
+  recentProblems?: ProblemReportRow[];
 }) {
   const showMesChiffres = ownerEmail && OWNER_EMAILS.includes(ownerEmail.toLowerCase());
   const [tab, setTab] = useState<"overview" | "garages">("overview");
@@ -101,7 +112,54 @@ export function AdminTabs({
                 {stats.totalAlerts}
               </div>
             </div>
+            <div className="rounded-2xl border border-slate-200/70 bg-white p-5 shadow-sm">
+              <div className="text-sm text-slate-500">Problèmes signalés</div>
+              <div className="mt-1 text-2xl font-bold text-slate-900">
+                {stats.problemReportsCount}
+              </div>
+            </div>
           </div>
+
+          {recentProblems.length > 0 && (
+            <div className="mt-8">
+              <h2 className="text-xl font-semibold text-slate-800">
+                Derniers problèmes signalés
+              </h2>
+              <div className="mt-4 space-y-3">
+                {recentProblems.map((p) => (
+                  <div
+                    key={p.id}
+                    className="rounded-2xl border border-slate-200/70 bg-white p-4 shadow-sm"
+                  >
+                    <p className="text-sm text-slate-800 whitespace-pre-wrap">{p.message}</p>
+                    <div className="mt-2 flex flex-wrap items-center gap-2 text-xs text-slate-500">
+                      {p.email && <span>Contact : {p.email}</span>}
+                      {p.pageUrl && (
+                        <span className="truncate max-w-xs" title={p.pageUrl}>
+                          Page : {p.pageUrl}
+                        </span>
+                      )}
+                      <time>
+                        {new Date(p.createdAt).toLocaleDateString("fr-BE", {
+                          day: "numeric",
+                          month: "short",
+                          year: "numeric",
+                          hour: "2-digit",
+                          minute: "2-digit",
+                        })}
+                      </time>
+                    </div>
+                  </div>
+                ))}
+              </div>
+              <Link
+                href="/admin/problems"
+                className="mt-3 inline-block text-sm text-sky-600 hover:text-sky-700"
+              >
+                Voir tous les problèmes signalés →
+              </Link>
+            </div>
+          )}
 
           <div className="mt-8">
             <h2 className="text-xl font-semibold text-slate-800">
@@ -166,6 +224,17 @@ export function AdminTabs({
                 </span>
                 <span className="mt-1 text-sm text-slate-600">
                   {stats.recentFeedbacks} avis — Retours utilisateurs
+                </span>
+              </Link>
+              <Link
+                href="/admin/problems"
+                className="flex flex-col rounded-2xl border border-amber-200/70 bg-amber-50/50 p-5 shadow-sm transition hover:border-amber-300 hover:bg-amber-100/50"
+              >
+                <span className="text-lg font-semibold text-amber-900">
+                  Problèmes signalés
+                </span>
+                <span className="mt-1 text-sm text-amber-700">
+                  {stats.problemReportsCount} signalement{stats.problemReportsCount !== 1 ? "s" : ""} — Voir le détail
                 </span>
               </Link>
               <Link

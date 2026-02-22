@@ -25,7 +25,7 @@ export function labelFromDbCategory(category: ListingCategory) {
 }
 
 export function toListingCardModelFromDb(
-  listing: Pick<DbListing, "id" | "title" | "category" | "mode" | "price" | "year" | "km" | "city" | "isSponsored"> & {
+  listing: Pick<DbListing, "id" | "title" | "category" | "mode" | "price" | "year" | "km" | "city" | "isSponsored" | "make" | "model" | "displacementL"> & {
     photos?: Array<{ url: string; order: number }>;
   }
 ): ListingCardModel {
@@ -42,6 +42,9 @@ export function toListingCardModelFromDb(
     photoUrl: listing.photos && listing.photos.length > 0 
       ? listing.photos.sort((a, b) => a.order - b.order)[0].url 
       : undefined,
+    make: listing.make ?? undefined,
+    model: listing.model ?? undefined,
+    displacementL: listing.displacementL ?? undefined,
   };
 }
 

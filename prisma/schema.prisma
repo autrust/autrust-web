@@ -15,6 +15,7 @@ enum ListingCategory {
 }
 
 enum ListingStatus {
+  DRAFT   // Brouillon : visible uniquement par le vendeur jusqu'à publication
   ACTIVE
   SOLD
   ARCHIVED
@@ -269,6 +270,7 @@ model Listing {
   year         Int
   km           Int
   city         String
+  country      String?        // Pays (ex: BE, FR, NL, LU)
 
   // Immatriculation : null = pas encore immatriculé, sinon date de 1ère immatriculation
   firstRegistrationDate DateTime?
@@ -284,7 +286,8 @@ model Listing {
   hasServiceBook Boolean       @default(false)
   isNonSmoker    Boolean       @default(false)
   hasWarranty    Boolean       @default(false)
-  isDamaged      Boolean       @default(false)
+  isDamaged      Boolean       @default(false)  // A été accidenté (accident)
+  hasMinorDamage Boolean       @default(false) // A été accroché ou petit accident
   isSponsored    Boolean       @default(false) // Annonces sponsorisées/partenaires
   sponsoredUntil DateTime?     // Date d'expiration du sponsoring
   hasCarVerticalVerification Boolean @default(false) // Option payante : vérification CarVertical
@@ -317,7 +320,7 @@ model Listing {
   contactPhone String?
   contactEmail String?
 
-  status       ListingStatus   @default(ACTIVE)
+  status       ListingStatus   @default(DRAFT)
   photos       ListingPhoto[]
   reports      ListingReport[]
   kyc             ListingKyc?
@@ -370,6 +373,22 @@ model ListingReport {
   @@index([status])
 }
 
+model ReportOrder {
+  id                     String   @id @default(cuid())
+  createdAt              DateTime @default(now())
+  stripeSessionId        String   @unique
+  stripePaymentIntentId  String?
+  status                 String   @default("paid")
+  amountCents            Int
+  currency               String   @default("eur")
+  email                  String?
+  phone                  String?
+  vin                    String?
+  make                   String?
+  model                  String?
+  provider               String   @default("carvertical")
+}
+
 model ContactRequest {
   id         String   @id @default(cuid())
   createdAt  DateTime @default(now())
@@ -392,6 +411,17 @@ model SiteFeedback {
   stars     Int      @default(5) // 1-5
   message   String   // Ce qu'on pourrait améliorer
   email     String?  // Optionnel, pour contacter si besoin
+}
+
+model ProblemReport {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+
+  message   String   // Description du problème signalé
+  email     String?  // Optionnel, pour recontacter
+  pageUrl   String?  // Page où le problème a été signalé
+
+  @@index([createdAt])
 }
 
 model AdminAlert {

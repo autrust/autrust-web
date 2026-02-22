@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
+import { CARVERTICAL_ORIGINAL_PRICE_EUR, CARVERTICAL_PRICE_CENTS, CARVERTICAL_PRICE_EUR } from "@/lib/constants";
 import { prisma } from "@/lib/db";
 import { getAppUrl, getStripeServer } from "@/lib/stripe";
 
@@ -10,8 +11,6 @@ const CheckoutSchema = z.object({
   vin: z.string().optional(),
 });
 
-// CarVertical : vendeur ou acheteur paie 10 €
-const REPORT_PRICE_CENTS = 1000; // 10 €
 const REPORT_CURRENCY = "eur";
 
 export async function POST(req: Request) {
@@ -34,19 +33,25 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "NOT_FOUND" }, { status: 404 });
   }
 
+  let stripe;
+  try {
+    stripe = getStripeServer();
+  } catch {
+    return NextResponse.json({ error: "STRIPE_NOT_CONFIGURED" }, { status: 503 });
+  }
+
   const report = await prisma.listingReport.create({
     data: {
       listingId: listing.id,
       provider,
       country,
       vin: vin ?? listing.vin ?? undefined,
-      amountCents: REPORT_PRICE_CENTS,
+      amountCents: CARVERTICAL_PRICE_CENTS,
       currency: REPORT_CURRENCY,
       status: "PENDING_PAYMENT",
     },
   });
 
-  const stripe = getStripeServer();
   const appUrl = getAppUrl();
 
   const session = await stripe.checkout.sessions.create({
@@ -56,9 +61,9 @@ export async function POST(req: Request) {
         quantity: 1,
         price_data: {
           currency: REPORT_CURRENCY,
-          unit_amount: REPORT_PRICE_CENTS,
+          unit_amount: CARVERTICAL_PRICE_CENTS,
           product_data: {
-            name: "Rapport d’historique véhicule",
+            name: `Rapport d’historique véhicule (${CARVERTICAL_PRICE_EUR} € au lieu de ${CARVERTICAL_ORIGINAL_PRICE_EUR.toFixed(2).replace(".", ",")} €)`,
             description: `Annonce: ${listing.title}`,
           },
         },

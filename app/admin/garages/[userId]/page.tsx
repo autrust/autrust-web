@@ -28,8 +28,8 @@ function planLabel(plan: string): string {
   const perMonth = PLAN_PRICE_EUR[plan] ?? 0;
   return `${name} (${perMonth} €/mois)`;
 }
-const CARVERTICAL_COST_CENTS = 800;
-const CARVERTICAL_MARGIN_CENTS = 200;
+const CARVERTICAL_COST_CENTS = 800; // 8 € par rapport (coût CarVertical)
+const CARVERTICAL_MARGIN_CENTS = 699; // 14,99 € - 8 € (voir lib/constants.ts CARVERTICAL_PRICE_EUR)
 const DEPOSIT_COMMISSION_PERCENT = 3;
 
 function formatEur(cents: number) {

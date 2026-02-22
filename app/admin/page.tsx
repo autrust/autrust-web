@@ -3,7 +3,7 @@ import { redirect } from "next/navigation";
 import { getCurrentUser, isAdmin } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { AdminTabs } from "@/app/admin/AdminTabs";
-import type { AdminStats, GarageRow } from "@/app/admin/AdminTabs";
+import type { AdminStats, GarageRow, ProblemReportRow } from "@/app/admin/AdminTabs";
 
 export const dynamic = "force-dynamic";
 
@@ -25,6 +25,7 @@ export default async function AdminPage() {
     totalGarages,
     totalAlerts,
     recentFeedbacks,
+    problemReportResult,
   ] = await Promise.all([
     prisma.user.count(),
     prisma.listing.count(),
@@ -33,7 +34,24 @@ export default async function AdminPage() {
     prisma.user.count({ where: { profileType: "CONCESSIONNAIRE" } }),
     prisma.adminAlert.count(),
     prisma.siteFeedback.count(),
+    (async () => {
+      try {
+        const [count, list] = await Promise.all([
+          prisma.problemReport.count(),
+          prisma.problemReport.findMany({
+            orderBy: { createdAt: "desc" },
+            take: 5,
+          }),
+        ]);
+        return { count, list };
+      } catch {
+        return { count: 0, list: [] };
+      }
+    })(),
   ]);
+
+  const problemReportsCount = problemReportResult.count;
+  const recentProblemsDb = problemReportResult.list;
 
   // Garages triés par ordre alphabétique (email)
   const garagesDb = await prisma.user.findMany({
@@ -86,21 +104,21 @@ export default async function AdminPage() {
   garageIds.forEach((id) => {
     statusBySeller[id] = { ACTIVE: 0, SOLD: 0, ARCHIVED: 0 };
   });
-  countsBySeller.forEach((row: { sellerId: string; status: string; _count: { id: number } }) => {
-    if (row.sellerId && row.status in statusBySeller[row.sellerId]) {
+  countsBySeller.forEach((row) => {
+    if (row.sellerId != null && row.status in statusBySeller[row.sellerId]) {
       (statusBySeller[row.sellerId] as Record<string, number>)[row.status] =
         row._count.id;
     }
   });
 
   const soldAmountMap: Record<string, number> = {};
-  soldAmountBySeller.forEach((row: { sellerId: string; _sum: { price: number | null } }) => {
-    soldAmountMap[row.sellerId] = row._sum?.price ?? 0;
+  soldAmountBySeller.forEach((row) => {
+    if (row.sellerId != null) soldAmountMap[row.sellerId] = row._sum?.price ?? 0;
   });
 
   const carVerticalMap: Record<string, number> = {};
-  carVerticalBySeller.forEach((row: { sellerId: string; _count: { id: number } }) => {
-    carVerticalMap[row.sellerId] = row._count.id;
+  carVerticalBySeller.forEach((row) => {
+    if (row.sellerId != null) carVerticalMap[row.sellerId] = row._count.id;
   });
 
   const garages: GarageRow[] = garagesDb.map((g) => {
@@ -129,7 +147,16 @@ export default async function AdminPage() {
     totalGarages,
     totalAlerts,
     recentFeedbacks,
+    problemReportsCount,
   };
+
+  const recentProblems: ProblemReportRow[] = recentProblemsDb.map((p) => ({
+    id: p.id,
+    message: p.message,
+    email: p.email,
+    pageUrl: p.pageUrl,
+    createdAt: p.createdAt.toISOString(),
+  }));
 
   return (
     <main className="px-6 py-10">
@@ -151,7 +178,7 @@ export default async function AdminPage() {
           </Link>
         </div>
 
-        <AdminTabs stats={stats} garages={garages} ownerEmail={user.email} />
+        <AdminTabs stats={stats} garages={garages} ownerEmail={user.email} recentProblems={recentProblems} />
       </div>
     </main>
   );

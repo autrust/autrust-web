@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
+import { CARVERTICAL_DISCOUNT_PERCENT, CARVERTICAL_ORIGINAL_PRICE_EUR, CARVERTICAL_PRICE_EUR } from "@/lib/constants";
 import { CATEGORY_OPTIONS } from "@/lib/listings";
 import { SELLER_OPTION_GROUPS } from "@/lib/sellerOptions";
 
@@ -56,6 +57,9 @@ export function SellForm() {
   >({ status: "idle" });
 
   const [title, setTitle] = useState("");
+  const [make, setMake] = useState("");
+  const [model, setModel] = useState("");
+  const [displacementL, setDisplacementL] = useState("");
   const [mode, setMode] = useState<"sale" | "rent">("sale");
   const [category, setCategory] = useState("auto");
   const [year, setYear] = useState("");
@@ -79,6 +83,7 @@ export function SellForm() {
   const [isNonSmoker, setIsNonSmoker] = useState(false);
   const [hasWarranty, setHasWarranty] = useState(false);
   const [isDamaged, setIsDamaged] = useState(false);
+  const [hasMinorDamage, setHasMinorDamage] = useState(false);
   const [hasCarVerticalVerification, setHasCarVerticalVerification] = useState(false);
   const [fuelTouched, setFuelTouched] = useState(false);
   const [gearboxTouched, setGearboxTouched] = useState(false);
@@ -258,6 +263,9 @@ export function SellForm() {
 
     // Auto-fill (on n’écrase pas ce que l’utilisateur a déjà rempli)
     if (!title.trim() && data.suggestedTitle) setTitle(data.suggestedTitle);
+    if (!make.trim() && data.make) setMake(data.make);
+    if (!model.trim() && data.model) setModel(data.model);
+    if (!displacementL.trim() && data.displacementL) setDisplacementL(data.displacementL ?? "");
     if (!year.trim() && data.year) setYear(String(data.year));
     if (!categoryTouched && data.categoryHint) setCategory(data.categoryHint);
     if (!description.trim()) {
@@ -312,8 +320,12 @@ export function SellForm() {
       isNonSmoker: Boolean(fd.get("isNonSmoker")),
       hasWarranty: Boolean(fd.get("hasWarranty")),
       isDamaged: Boolean(fd.get("isDamaged")),
+      hasMinorDamage: Boolean(fd.get("hasMinorDamage")),
       hasCarVerticalVerification: hasCarVerticalVerification,
       title: String(fd.get("title") ?? ""),
+      make: make.trim() || undefined,
+      model: model.trim() || undefined,
+      displacementL: displacementL.trim() || undefined,
       category: String(fd.get("category") ?? ""),
       price: String(fd.get("price") ?? ""),
       year: String(fd.get("year") ?? ""),
@@ -501,6 +513,40 @@ export function SellForm() {
               ? "Location (MVP): le prix est interprété comme un prix / jour."
               : "Vente: prix total du véhicule."}
           </div>
+        </div>
+      </div>
+
+      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+        <div>
+          <label className="text-sm text-slate-700">Marque</label>
+          <input
+            name="make"
+            placeholder="Ex: Volkswagen, BMW"
+            className="mt-2 w-full rounded-xl border border-slate-200 bg-white/85 px-4 py-3 text-slate-900 placeholder:text-slate-400 shadow-sm focus:outline-none focus:ring-2 focus:ring-sky-300/60 focus:border-sky-300"
+            value={make}
+            onChange={(e) => setMake(e.target.value)}
+          />
+        </div>
+        <div>
+          <label className="text-sm text-slate-700">Modèle</label>
+          <input
+            name="model"
+            placeholder="Ex: Golf 7, Série 3"
+            className="mt-2 w-full rounded-xl border border-slate-200 bg-white/85 px-4 py-3 text-slate-900 placeholder:text-slate-400 shadow-sm focus:outline-none focus:ring-2 focus:ring-sky-300/60 focus:border-sky-300"
+            value={model}
+            onChange={(e) => setModel(e.target.value)}
+          />
+        </div>
+        <div>
+          <label className="text-sm text-slate-700">Cylindrée (L)</label>
+          <input
+            name="displacementL"
+            placeholder="Ex: 1.6, 2.0"
+            className="mt-2 w-full rounded-xl border border-slate-200 bg-white/85 px-4 py-3 text-slate-900 placeholder:text-slate-400 shadow-sm focus:outline-none focus:ring-2 focus:ring-sky-300/60 focus:border-sky-300"
+            value={displacementL}
+            onChange={(e) => setDisplacementL(e.target.value)}
+          />
+          <div className="mt-1 text-xs text-slate-500">En litres (ex: 1.6 pour 1600 cm³)</div>
         </div>
       </div>
 
@@ -792,14 +838,27 @@ export function SellForm() {
             onChange={(e) => setIsDamaged(e.target.checked)}
             className="h-4 w-4 accent-emerald-600"
           />
-          Accidentée / endommagée
+          A été accidenté
+        </label>
+        <label className="flex items-center gap-2 text-sm text-slate-800">
+          <input
+            type="checkbox"
+            name="hasMinorDamage"
+            checked={hasMinorDamage}
+            onChange={(e) => setHasMinorDamage(e.target.checked)}
+            className="h-4 w-4 accent-emerald-600"
+          />
+          A été accroché ou petit accident
         </label>
       </div>
 
       <div className="rounded-2xl border-2 border-amber-200/80 bg-amber-50/75 p-5 shadow-sm backdrop-blur">
         <h3 className="text-sm font-semibold text-slate-900">Certificat CarVertical</h3>
         <p className="mt-2 text-xs text-slate-700 leading-relaxed">
-          CarVertical vérifie l’historique du véhicule via le VIN (plus de 900 sources : dommages, kilométrage réel, vols, immatriculations). Tu peux obtenir un rapport sur leur site puis l’associer à ton annonce pour rassurer les acheteurs.
+          CarVertical vérifie l’historique du véhicule via le VIN (plus de 900 sources : dommages, kilométrage réel, vols, immatriculations). Tu peux obtenir un rapport via notre site puis l’associer à ton annonce pour rassurer les acheteurs.
+        </p>
+        <p className="mt-2 text-xs text-slate-600">
+          Prix du rapport sur AuTrust : <strong>{CARVERTICAL_PRICE_EUR} €</strong> <span className="text-slate-500">(au lieu de {CARVERTICAL_ORIGINAL_PRICE_EUR.toFixed(2).replace(".", ",")} €, sur Carvertical −{CARVERTICAL_DISCOUNT_PERCENT} %)</span>
         </p>
         <div className="mt-3 flex flex-wrap gap-4">
           <a
@@ -826,7 +885,7 @@ export function SellForm() {
             onChange={(e) => setHasCarVerticalVerification(e.target.checked)}
             className="h-4 w-4 accent-amber-600"
           />
-          <span>Mon véhicule a un rapport / une vérification CarVertical (je l’ajouterai après publication si besoin)</span>
+          <span>Je souhaite le rapport *</span>
         </label>
       </div>
 

@@ -5,7 +5,13 @@ import { useRef, useEffect, useState } from "react";
 import type { Locale } from "@/lib/locale";
 import { LanguageSwitcher } from "./LanguageSwitcher";
 
-const defaultMenuLinks: { href: string; label: string }[] = [
+export type MenuItem =
+  | { href: string; label: string }
+  | { action: "aide" | "chat"; label: string }
+  | { action: "chatAide"; labelChat: string; labelAide: string }
+  | { action: "buyRent"; labelBuy: string; labelRent: string };
+
+const defaultMenuLinks: MenuItem[] = [
   { href: "/", label: "Accueil" },
   { href: "/#comment-ca-marche", label: "Comment ça marche" },
   { href: "/pourquoi-autrust", label: "Pourquoi AuTrust" },
@@ -22,7 +28,7 @@ export function SiteMenu({
   openMenuAria = "Ouvrir le menu",
   currentLocale,
 }: {
-  menuLinks?: { href: string; label: string }[];
+  menuLinks?: MenuItem[];
   openMenuAria?: string;
   currentLocale?: Locale;
 }) {
@@ -76,17 +82,83 @@ export function SiteMenu({
           className="absolute left-0 top-full z-20 mt-1 min-w-[200px] rounded-xl border border-slate-200 bg-white py-1 shadow-lg"
           role="menu"
         >
-          {menuLinks.map(({ href, label }) => (
-            <Link
-              key={href}
-              href={href}
-              role="menuitem"
-              onClick={() => setOpen(false)}
-              className="block px-4 py-2.5 text-sm text-slate-700 hover:bg-slate-50 hover:text-slate-900 transition"
-            >
-              {label}
-            </Link>
-          ))}
+          {menuLinks.map((item, index) =>
+            "href" in item ? (
+              <Link
+                key={item.href}
+                href={item.href}
+                role="menuitem"
+                onClick={() => setOpen(false)}
+                className="block px-4 py-2.5 text-sm text-slate-700 hover:bg-slate-50 hover:text-slate-900 transition"
+              >
+                {item.label}
+              </Link>
+            ) : item.action === "chatAide" ? (
+              <div
+                key="chat-aide"
+                role="menuitem"
+                className="flex items-center gap-1 px-4 py-2.5 text-sm text-slate-700"
+              >
+                <button
+                  type="button"
+                  onClick={() => {
+                    window.dispatchEvent(new CustomEvent("openChat"));
+                    setOpen(false);
+                  }}
+                  className="hover:text-slate-900 underline underline-offset-1"
+                >
+                  {item.labelChat}
+                </button>
+                <span className="text-slate-400">/</span>
+                <button
+                  type="button"
+                  onClick={() => {
+                    window.dispatchEvent(new CustomEvent("openAide"));
+                    setOpen(false);
+                  }}
+                  className="hover:text-slate-900 underline underline-offset-1"
+                >
+                  {item.labelAide}
+                </button>
+              </div>
+            ) : item.action === "buyRent" ? (
+              <div
+                key="buy-rent"
+                role="menuitem"
+                className="flex items-center gap-1 px-4 py-2.5 text-sm text-slate-700"
+              >
+                <Link
+                  href="/listings"
+                  onClick={() => setOpen(false)}
+                  className="hover:text-slate-900 underline underline-offset-1"
+                >
+                  {item.labelBuy}
+                </Link>
+                <span className="text-slate-400">/</span>
+                <Link
+                  href="/location"
+                  onClick={() => setOpen(false)}
+                  className="hover:text-slate-900 underline underline-offset-1"
+                >
+                  {item.labelRent}
+                </Link>
+              </div>
+            ) : (
+              <button
+                key={`${item.action}-${index}`}
+                type="button"
+                role="menuitem"
+                onClick={() => {
+                  if (item.action === "chat") window.dispatchEvent(new CustomEvent("openChat"));
+                  else if (item.action === "aide") window.dispatchEvent(new CustomEvent("openAide"));
+                  setOpen(false);
+                }}
+                className="block w-full px-4 py-2.5 text-left text-sm text-slate-700 hover:bg-slate-50 hover:text-slate-900 transition"
+              >
+                {item.label}
+              </button>
+            )
+          )}
           {currentLocale != null && (
             <div className="mt-2 border-t border-slate-100 px-3 py-2">
               <LanguageSwitcher currentLocale={currentLocale} />

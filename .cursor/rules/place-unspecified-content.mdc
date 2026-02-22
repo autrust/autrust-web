@@ -1,0 +1,19 @@
+---
+description: Quand l'utilisateur donne du contenu sans préciser où le mettre, le placer au bon endroit ou créer une classe/fichier dédié
+alwaysApply: true
+---
+
+# Contenu sans destination précisée
+
+Quand l'utilisateur fournit du contenu (texte, données, config, extraits) **sans indiquer** où le placer :
+
+1. **Déduire la destination** à partir du type de contenu :
+   - **Texte juridique / page légale** → page adaptée sous `app/legal/` (ex. `terms-private`, `terms-pro`, `legal-notice`, `privacy`, `cookies`, `accessibility`) ou section dans une page existante.
+   - **Constantes / listes / config** → `lib/` (fichier existant si le sujet existe, sinon nouveau fichier ou classe dans `lib/`).
+   - **Variables d’environnement** → rappeler d’ajouter dans `.env` (sans écrire dans `.env` si non fourni) ou documenter dans un README / exemple `.env.example`.
+   - **Copy / UI** → composant ou page concernée ; créer un composant ou une section si besoin.
+   - **Données structurées (types, schémas)** → types dans `lib/` ou à côté du module concerné ; créer une classe ou un module si ça n’existe pas encore.
+
+2. **Si aucun emplacement évident n’existe** : créer une classe, un module ou une page dédiée au bon endroit (ex. `lib/…`, `app/…/page.tsx`, composant dans `app/_components/`), avec un nom clair et cohérent au projet.
+
+3. **Rester concis** : pas de question systématique pour « où mettre ? » si la déduction est raisonnable ; en cas de vrai doute, une seule question courte pour clarifier.

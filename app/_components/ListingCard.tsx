@@ -84,10 +84,17 @@ export function ListingCard({
           </div>
         </div>
         <div className={`${compact ? "mt-0.5 text-sm" : "mt-1 text-xl"} font-semibold text-slate-900 leading-tight`}>{listing.title}</div>
+        {(listing.make || listing.model) && (
+          <div className={`${compact ? "mt-0.5 text-[10px]" : "mt-1"} text-slate-600`}>
+            {[listing.make, listing.model].filter(Boolean).join(" ")}
+          </div>
+        )}
         <div className={`${compact ? "mt-1 text-[10px]" : "mt-2"} text-slate-600`}>
           {formatPriceEUR(listing.price)}
           {isRent ? " / jour" : ""} • {listing.year} •{" "}
-          {listing.km.toLocaleString("fr-BE")} km • {listing.city}
+          {listing.km.toLocaleString("fr-BE")} km
+          {listing.displacementL ? ` • ${listing.displacementL} L` : ""}
+          {" • "}{listing.city}
         </div>
       </div>
     </Link>

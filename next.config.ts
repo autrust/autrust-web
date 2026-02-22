@@ -1,6 +1,14 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+  async redirects() {
+    return [
+      { source: "/conditions-generales", destination: "/legal/terms-private", permanent: true },
+      { source: "/mentions-legales", destination: "/legal/legal-notice", permanent: true },
+      { source: "/confidentialite", destination: "/legal/privacy", permanent: true },
+      { source: "/accessibilite", destination: "/legal/accessibility", permanent: true },
+    ];
+  },
   // Configuration pour les images externes
   images: {
     remotePatterns: [

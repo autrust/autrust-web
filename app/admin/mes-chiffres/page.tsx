@@ -30,7 +30,7 @@ function planLabel(plan: string): string {
 
 // Tu paies 8 € à CarVertical, le client te paie 10 € → bénéfice 2 €/rapport
 const CARVERTICAL_COST_CENTS = 800; // 8 € par rapport (ce que tu paies à CarVertical)
-const CARVERTICAL_PRICE_CENTS = 1000; // 10 € (ce que le client te paie)
+const CARVERTICAL_PRICE_CENTS = 1499; // 14,99 € (ce que le client te paie, voir lib/constants.ts)
 const CARVERTICAL_MARGIN_CENTS = CARVERTICAL_PRICE_CENTS - CARVERTICAL_COST_CENTS; // 2 €
 
 function formatEur(cents: number) {
@@ -225,7 +225,7 @@ export default async function AdminMesChiffresPage() {
         <section className="mt-8 rounded-2xl border border-slate-200/70 bg-white p-6 shadow-sm">
           <h2 className="text-xl font-semibold text-slate-800">Rapports CarVertical</h2>
           <p className="mt-1 text-sm text-slate-600">
-            Nombre de rapports payés. Tu paies 8 € à CarVertical, le client te paie 10 € → bénéfice 2 €/rapport.
+            Nombre de rapports payés. Tu paies 8 € à CarVertical, le client te paie 14,99 € → bénéfice ~7 €/rapport.
           </p>
           <div className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
             <div>

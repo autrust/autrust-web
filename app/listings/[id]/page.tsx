@@ -1,5 +1,6 @@
 import Link from "next/link";
 import Image from "next/image";
+import { CARVERTICAL_DISCOUNT_PERCENT, CARVERTICAL_ORIGINAL_PRICE_EUR, CARVERTICAL_PRICE_EUR } from "@/lib/constants";
 import { formatPriceEUR } from "@/lib/listings";
 import { prisma } from "@/lib/db";
 import { labelFromDbCategory } from "@/lib/listingsDb";
@@ -90,6 +91,20 @@ export default async function ListingDetail({
   }
 
   const currentUser = await getCurrentUser();
+  // Les brouillons ne sont visibles que par le vendeur
+  if (listing.status === "DRAFT" && currentUser?.id !== listing.sellerId) {
+    return (
+      <main className="min-h-screen px-6 py-10">
+        <div className="mx-auto max-w-3xl">
+          <h1 className="text-3xl font-bold">Annonce introuvable</h1>
+          <p className="mt-2 text-slate-600">Cette annonce n’est pas disponible.</p>
+          <Link href="/listings" className="inline-block mt-6 text-sky-700 underline">
+            Retour aux annonces
+          </Link>
+        </div>
+      </main>
+    );
+  }
   const buyer =
     currentUser
       ? await prisma.user.findUnique({ where: { id: currentUser.id }, include: { kyc: true } })
@@ -181,11 +196,25 @@ export default async function ListingDetail({
     <main className="px-6 py-10">
       <RecentlyViewedTracker listingId={listing.id} />
       <div className="mx-auto max-w-3xl">
+        {listing.status === "DRAFT" && currentUser?.id === listing.sellerId && (
+          <div className="mb-6 rounded-2xl border-2 border-amber-200 bg-amber-50 p-4 text-amber-900">
+            <p className="font-medium">Annonce en brouillon</p>
+            <p className="mt-1 text-sm">
+              Elle n’est visible que par vous. Vérifiez votre email et votre téléphone dans{" "}
+              <Link href="/account" className="underline font-medium">
+                Mon compte
+              </Link>
+              , puis publiez-la depuis « Mes annonces » pour la rendre visible à tous.
+            </p>
+          </div>
+        )}
         <div className="flex flex-wrap items-center justify-between gap-2">
           <Link href="/listings" className="text-sm underline decoration-sky-300 text-sky-700">
             ← Retour aux annonces
           </Link>
-          <ShareButton url={`/listings/${listing.id}`} title={listing.title} />
+          {listing.status === "ACTIVE" && (
+            <ShareButton url={`/listings/${listing.id}`} title={listing.title} />
+          )}
         </div>
 
         <div className="mt-6 text-sm text-slate-600">
@@ -297,7 +326,12 @@ export default async function ListingDetail({
           ) : null}
           {listing.isDamaged ? (
             <span className="rounded-full border border-amber-200 bg-amber-50 px-3 py-1 text-xs text-amber-900">
-              Accidentée / endommagée
+              A été accidenté
+            </span>
+          ) : null}
+          {listing.hasMinorDamage ? (
+            <span className="rounded-full border border-amber-200/80 bg-amber-50/80 px-3 py-1 text-xs text-amber-800">
+              A été accroché ou petit accident
             </span>
           ) : null}
         </div>
@@ -317,13 +351,54 @@ export default async function ListingDetail({
         ) : null}
 
         <div className="mt-4 rounded-2xl border border-slate-200/70 bg-slate-50/80 p-5 shadow-sm">
-          <h3 className="text-sm font-semibold text-slate-900">
-            Vérification CarVertical
+          <h3 className="text-lg font-semibold text-slate-900">
+            Rapport d&apos;historique véhicule — {CARVERTICAL_PRICE_EUR} €
           </h3>
           <p className="mt-2 text-sm text-slate-700 leading-relaxed">
-            CarVertical est une plateforme qui te permet de vérifier l’historique d’un véhicule à partir de son VIN (numéro d’identification) afin d’éviter les mauvaises affaires. Elle collecte des données de plus de 900 sources (bases gouvernementales, assurances, contrôles techniques, etc.) pour donner un rapport complet sur la vie passée d’une voiture ou moto comme : dommages subis, kilométrage réel, vols déclarés, historique d’immatriculation — tout ça avant d’acheter ou de vendre un véhicule.
+            Obtenez un rapport détaillé sur l&apos;historique du véhicule avant d&apos;acheter ou de vendre en toute confiance.
+          </p>
+          <ul className="mt-3 space-y-1.5 text-sm text-slate-700">
+            <li className="flex items-center gap-2">✔ Historique du véhicule</li>
+            <li className="flex items-center gap-2">✔ Kilométrage enregistré</li>
+            <li className="flex items-center gap-2">✔ Accidents connus</li>
+            <li className="flex items-center gap-2">✔ Origine et utilisation</li>
+            <li className="flex items-center gap-2">✔ Données issues de bases officielles et privées</li>
+          </ul>
+          <div className="mt-4 rounded-xl border border-amber-200/80 bg-amber-50/60 p-3 text-sm text-slate-800">
+            <strong>Important :</strong>
+            <br />
+            Le rapport est fourni par <strong>CarVertical</strong>, prestataire tiers indépendant.
+            AuTrust n&apos;est pas l&apos;éditeur du rapport et ne garantit pas l&apos;exactitude ou l&apos;exhaustivité des informations qu&apos;il contient.
+            <br className="my-1.5" />
+            Les conditions d&apos;utilisation et la politique de CarVertical sont consultables sur leur site officiel :{" "}
+            <a
+              href="https://www.carvertical.com/legal/terms-and-conditions"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-sky-600 hover:text-sky-700 underline"
+            >
+              https://www.carvertical.com/legal/terms-and-conditions
+            </a>
+            <br className="my-1.5" />
+            Le rapport est fourni à titre informatif uniquement.
+          </div>
+          <p className="mt-3 text-xs text-slate-600">
+            ☑️ En poursuivant l&apos;achat, vous acceptez les{" "}
+            <Link href="/legal/report-history" className="text-sky-600 hover:text-sky-700 underline">
+              conditions applicables au rapport d&apos;historique
+            </Link>
+            .
+          </p>
+          <p className="mt-2 text-sm font-medium text-slate-800">
+            Prix : {CARVERTICAL_PRICE_EUR} € TTC — livraison immédiate après paiement
           </p>
           <div className="mt-3 flex flex-wrap gap-4">
+            <Link
+              href="/legal/report-history"
+              className="text-sm font-medium text-sky-600 hover:text-sky-700 underline"
+            >
+              Clause rapports d&apos;historique (CarVertical)
+            </Link>
             <a
               href="https://www.carvertical.com/be/fr"
               target="_blank"

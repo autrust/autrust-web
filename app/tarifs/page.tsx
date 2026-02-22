@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { CARVERTICAL_DISCOUNT_PERCENT } from "@/lib/constants";
 
 export const metadata = {
   title: "Tarifs | AuTrust",
@@ -79,7 +80,7 @@ export default function TarifsPage() {
             ))}
           </ul>
           <div className="mt-6 rounded-xl border border-slate-200 bg-slate-50/80 p-4 text-sm text-slate-700">
-            <strong>CarVertical</strong> (vérification historique véhicule) : le vendeur choisit de l’inclure ou l’acheteur peut le payer au prix de <strong>10 €</strong>.
+            <strong>CarVertical</strong> (vérification historique véhicule) : le vendeur choisit de l’inclure ou l’acheteur peut le payer à <strong>14,99 €</strong>/rapport <span className="text-slate-500">(au lieu de 31,99 €, −{CARVERTICAL_DISCOUNT_PERCENT} %)</span>.
           </div>
           <div className="mt-6">
             <Link

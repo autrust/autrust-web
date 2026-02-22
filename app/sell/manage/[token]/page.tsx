@@ -8,10 +8,13 @@ export const dynamic = "force-dynamic";
 
 export default async function ManageListingPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ token: string }>;
+  searchParams: Promise<{ success?: string; report?: string; canceled?: string }>;
 }) {
   const { token } = await params;
+  const { success, report: reportIdFromUrl, canceled } = await searchParams;
   const user = await getCurrentUser();
   if (!user) redirect(`/auth?next=${encodeURIComponent(`/sell/manage/${token}`)}`);
 
@@ -34,6 +37,7 @@ export default async function ManageListingPage({
           amountCents: true,
           currency: true,
           errorMessage: true,
+          reportJson: true,
         },
       },
     },
@@ -86,6 +90,9 @@ export default async function ManageListingPage({
           <ManageReport
             manageToken={token}
             listingId={listing.id}
+            paymentSuccess={success === "1"}
+            reportIdFromUrl={reportIdFromUrl ?? null}
+            paymentCanceled={canceled === "1"}
             existingReports={listing.reports.map((r) => ({
               id: r.id,
               status: r.status,
@@ -96,6 +103,7 @@ export default async function ManageListingPage({
               amountCents: r.amountCents,
               currency: r.currency,
               errorMessage: r.errorMessage,
+              reportJson: r.reportJson as { detailsSubmittedAt?: string; marque?: string; modele?: string; phone?: string; email?: string } | null | undefined,
             }))}
           />
         </div>

@@ -1,12 +1,30 @@
 import Link from "next/link";
+import { cookies } from "next/headers";
+import { getLocaleFromCookie, LOCALE_COOKIE } from "@/lib/locale";
+import { getTranslations } from "@/lib/translations";
 
-export const metadata = {
-  title: "Comment ça marche | AuTrust",
-  description:
-    "Découvrez comment acheter et vendre un véhicule en toute confiance sur AuTrust : vendeurs vérifiés, acompte sécurisé, transparence VIN.",
-};
+export async function generateMetadata() {
+  const c = await cookies();
+  const locale = getLocaleFromCookie(c.get(LOCALE_COOKIE)?.value);
+  const t = getTranslations(locale);
+  return {
+    title: `${t.menu.howItWorks} | AuTrust`,
+    description:
+      locale === "fr"
+        ? "Découvrez comment acheter et vendre un véhicule en toute confiance sur AuTrust : vendeurs vérifiés, acompte sécurisé, transparence VIN."
+        : locale === "nl"
+          ? "Ontdek hoe u met vertrouwen een voertuig koopt en verkoopt op AuTrust: geverifieerde verkopers, beveiligd voorschot, VIN-transparantie."
+          : locale === "de"
+            ? "Erfahren Sie, wie Sie mit Vertrauen ein Fahrzeug auf AuTrust kaufen und verkaufen: verifizierte Verkäufer, sichere Anzahlung, FIN-Transparenz."
+            : "Find out how to buy and sell a vehicle with confidence on AuTrust: verified sellers, secure deposit, VIN transparency.",
+  };
+}
 
-export default function CommentCaMarchePage() {
+export default async function CommentCaMarchePage() {
+  const c = await cookies();
+  const locale = getLocaleFromCookie(c.get(LOCALE_COOKIE)?.value);
+  const t = getTranslations(locale);
+
   return (
     <main className="min-h-screen bg-gradient-to-b from-blue-50/70 via-white to-white">
       {/* Hero */}
@@ -14,19 +32,15 @@ export default function CommentCaMarchePage() {
         <div className="rounded-3xl border bg-white/70 backdrop-blur-md p-8 sm:p-12 shadow-sm">
           <div className="inline-flex items-center gap-2 rounded-full border px-3 py-1 text-sm text-slate-700">
             <span className="h-2 w-2 rounded-full bg-emerald-500" />
-            Transparence • Sécurité • Confiance
+            {t.home.howItWorksBadge}
           </div>
 
           <h1 className="mt-5 text-3xl sm:text-5xl font-semibold tracking-tight text-slate-900">
-            Comment fonctionne AuTrust ?
+            {t.home.howItWorksTitle}
           </h1>
 
           <p className="mt-4 max-w-2xl text-base sm:text-lg text-slate-600">
-            Achetez et vendez en toute confiance, en{" "}
-            <span className="font-medium text-slate-900">4 étapes simples</span>.
-            AuTrust protège les acheteurs et réduit les fraudes grâce à la
-            vérification des vendeurs, l’acompte sécurisé et la transparence des
-            informations.
+            {t.home.howItWorksIntro}
           </p>
 
           <div className="mt-8 flex flex-col sm:flex-row gap-3">
@@ -34,22 +48,22 @@ export default function CommentCaMarchePage() {
               href="/listings"
               className="inline-flex items-center justify-center rounded-xl bg-emerald-600 px-5 py-3 text-white font-medium shadow-sm hover:bg-emerald-700 transition"
             >
-              Explorer les véhicules
+              {t.home.exploreVehicles}
             </Link>
             <Link
               href="/sell"
               className="inline-flex items-center justify-center rounded-xl border border-slate-200 px-5 py-3 font-medium text-slate-900 hover:bg-slate-50 transition"
             >
-              Déposer une annonce
+              {t.common.postAd}
             </Link>
           </div>
 
           {/* Trust chips */}
           <div className="mt-8 flex flex-wrap gap-2">
-            <Chip>Vendeurs vérifiés</Chip>
-            <Chip>Acompte sécurisé</Chip>
-            <Chip>VIN & transparence</Chip>
-            <Chip>Garages partenaires</Chip>
+            <Chip>{t.home.verifiedSellers}</Chip>
+            <Chip>{t.home.secureDeposit}</Chip>
+            <Chip>{t.home.vinTransparency}</Chip>
+            <Chip>{t.home.partnerGarages}</Chip>
           </div>
         </div>
       </section>
@@ -59,71 +73,34 @@ export default function CommentCaMarchePage() {
         <div className="grid gap-6 lg:grid-cols-2">
           {/* Sellers */}
           <Card
-            title="Pour les vendeurs"
-            subtitle="Publiez plus vite, avec plus de confiance."
-            badge="Vendeur"
+            title={t.home.forSellers}
+            subtitle={t.home.forSellersDesc}
+            badge={t.home.seller}
           >
             <Steps>
-              <Step
-                n="1"
-                title="Créez votre compte"
-                text="Inscription obligatoire pour publier. AuTrust vérifie chaque vendeur pour garantir un environnement fiable."
-              />
-              <Step
-                n="2"
-                title="Publiez votre véhicule"
-                text="Ajoutez infos, photos et VIN. Vous pouvez activer l’option historique véhicule si disponible."
-              />
-              <Step
-                n="3"
-                title="Recevez des acheteurs qualifiés"
-                text="Les acheteurs peuvent réserver via acompte sécurisé pour limiter les demandes non sérieuses."
-              />
-              <Step
-                n="4"
-                title="Finalisez en toute sécurité"
-                text="L’acompte est protégé jusqu’à validation de la transaction. Support AuTrust en cas de souci."
-              />
+              <Step n="1" title={t.home.step1SellerTitle} text={t.home.step1SellerText} />
+              <Step n="2" title={t.home.step2SellerTitle} text={t.home.step2SellerText} />
+              <Step n="3" title={t.home.step3SellerTitle} text={t.home.step3SellerText} />
+              <Step n="4" title={t.home.step4SellerTitle} text={t.home.step4SellerText} />
             </Steps>
           </Card>
 
           {/* Buyers */}
           <Card
-            title="Pour les acheteurs"
-            subtitle="Achetez sereinement, avec des preuves."
-            badge="Acheteur"
+            title={t.home.forBuyers}
+            subtitle={t.home.forBuyersDesc}
+            badge={t.home.buyer}
           >
             <Steps>
-              <Step
-                n="1"
-                title="Trouvez un véhicule"
-                text="Filtrez, comparez, et repérez les badges de confiance sur les annonces."
-              />
-              <Step
-                n="2"
-                title="Vérifiez l’historique"
-                text="Consultez le rapport véhicule lorsqu’il est proposé (VIN, événements, cohérence des infos)."
-              />
-              <Step
-                n="3"
-                title="Réservez via acompte sécurisé"
-                text="Bloquez le véhicule en versant un acompte protégé. Plus de sécurité, moins d’arnaques."
-              />
-              <Step
-                n="4"
-                title="Finalisez sans stress"
-                text="Rendez-vous, contrôle, paiement final. AuTrust peut assister en cas de litige."
-              />
+              <Step n="1" title={t.home.step1BuyerTitle} text={t.home.step1BuyerText} />
+              <Step n="2" title={t.home.step2BuyerTitle} text={t.home.step2BuyerText} />
+              <Step n="3" title={t.home.step3BuyerTitle} text={t.home.step3BuyerText} />
+              <Step n="4" title={t.home.step4BuyerTitle} text={t.home.step4BuyerText} />
             </Steps>
 
             <div className="mt-6 rounded-2xl border border-emerald-200/80 bg-emerald-50/60 p-4 text-sm text-slate-700">
-              <p className="font-medium text-slate-900">Astuce AuTrust</p>
-              <p className="mt-1">
-                Privilégiez les annonces{" "}
-                <span className="font-medium">Vendeur vérifié</span> et{" "}
-                <span className="font-medium">Garage partenaire</span> pour une
-                expérience encore plus fiable.
-              </p>
+              <p className="font-medium text-slate-900">{t.home.tipTitle}</p>
+              <p className="mt-1">{t.home.tipText}</p>
             </div>
           </Card>
         </div>
@@ -131,25 +108,21 @@ export default function CommentCaMarchePage() {
         {/* CTA strip */}
         <div className="mt-10 rounded-3xl border border-slate-200 bg-white p-6 sm:p-8 shadow-sm flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
           <div>
-            <h2 className="text-xl font-semibold text-slate-900">
-              Prêt à passer à la nouvelle norme du marché automobile ?
-            </h2>
-            <p className="mt-1 text-slate-600">
-              Rejoignez AuTrust et profitez d’une marketplace plus sûre.
-            </p>
+            <h2 className="text-xl font-semibold text-slate-900">{t.home.ctaTitle}</h2>
+            <p className="mt-1 text-slate-600">{t.home.ctaSubtitle}</p>
           </div>
           <div className="flex gap-3">
             <Link
               href="/auth"
               className="inline-flex items-center justify-center rounded-xl border border-slate-200 px-5 py-3 font-medium text-slate-900 hover:bg-slate-50 transition"
             >
-              Créer un compte
+              {t.home.createAccount}
             </Link>
             <Link
               href="/sell"
               className="inline-flex items-center justify-center rounded-xl bg-slate-900 px-5 py-3 text-white font-medium hover:bg-slate-800 transition"
             >
-              Je suis le vendeur
+              {t.home.iAmSeller}
             </Link>
           </div>
         </div>

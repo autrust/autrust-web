@@ -7,11 +7,11 @@ import { ListingCardWithFavorite } from "@/app/_components/ListingCardWithFavori
 import { RecentlyViewedList } from "@/app/_components/RecentlyViewedList";
 import {
   BODY_TYPE_OPTIONS,
-  CATEGORY_OPTIONS,
   demoListings,
   toListingCardModel,
 } from "@/lib/listings";
-import { CAR_BRANDS } from "@/lib/carBrands";
+import { HomeSearchForm } from "@/app/_components/HomeSearchForm";
+import { CAR_BRANDS, getPopularAndOtherBrands } from "@/lib/carBrands";
 import { prisma } from "@/lib/db";
 import { toListingCardModelFromDb } from "@/lib/listingsDb";
 import { getCurrentUser } from "@/lib/auth";
@@ -131,155 +131,79 @@ export default async function HomePage() {
                   </Suspense>
                 </p>
 
-            <form action="/listings" method="GET" className="mt-8 grid gap-3 max-w-xl">
-              <div className="grid gap-3 sm:grid-cols-3">
-                <input
-                  name="q"
-                  placeholder={t.home.searchPlaceholder}
-                  className="w-full rounded-xl border border-slate-200 bg-white/85 px-4 py-3 text-slate-900 placeholder:text-slate-400 shadow-sm backdrop-blur focus:outline-none focus:ring-2 focus:ring-sky-300/60 focus:border-sky-300 sm:col-span-2"
-                />
-                <select
-                  name="category"
-                  defaultValue=""
-                  className="w-full rounded-xl border border-slate-200 bg-white/85 px-4 py-3 text-slate-900 shadow-sm backdrop-blur focus:outline-none focus:ring-2 focus:ring-sky-300/60 focus:border-sky-300"
-                >
-                  <option value="">{t.common.allCategories}</option>
-                  {CATEGORY_OPTIONS.map((cat) => (
-                    <option key={cat.slug} value={cat.slug}>
-                      {locale === "en" ? (cat.slug === "auto" ? t.listing.categoryAuto : cat.slug === "moto" ? t.listing.categoryMoto : t.listing.categoryUtilitaire) : cat.label}
-                    </option>
-                  ))}
-                </select>
-              </div>
+                {/* Recherche : catégorie (Auto / Moto / Utilitaire) filtre les marques */}
+                <HomeSearchForm locale={locale} t={t} />
 
-              <div className="grid gap-3 sm:grid-cols-3">
-                <select
-                  name="bodyType"
-                  defaultValue=""
-                  className="w-full rounded-xl border border-slate-200 bg-white/85 px-4 py-3 text-slate-900 shadow-sm backdrop-blur focus:outline-none focus:ring-2 focus:ring-sky-300/60 focus:border-sky-300"
-                >
-                  <option value="">{t.common.allTypes}</option>
-                  {BODY_TYPE_OPTIONS.map((b) => (
-                    <option key={b.slug} value={b.slug}>
-                      {b.label}
-                    </option>
-                  ))}
-                </select>
-                <input
-                  name="city"
-                  placeholder={t.home.cityPlaceholder}
-                  className="w-full rounded-xl border border-slate-200 bg-white/85 px-4 py-3 text-slate-900 placeholder:text-slate-400 shadow-sm backdrop-blur focus:outline-none focus:ring-2 focus:ring-sky-300/60 focus:border-sky-300 sm:col-span-1"
-                />
-                <button
-                  type="submit"
-                  className="rounded-xl bg-sky-600 px-5 py-3 font-medium text-white hover:bg-sky-500 transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-300/60 sm:col-span-1"
-                >
-                  {t.common.search}
-                </button>
-              </div>
-            </form>
-
-            <div className="mt-8 flex flex-wrap gap-3">
-              <Link
-                href="/sell"
-                className="rounded-xl border border-emerald-200/80 bg-white/75 px-4 py-2 text-sm font-medium text-emerald-700 hover:border-emerald-300 hover:bg-emerald-50/70 transition backdrop-blur"
-              >
-                {t.home.postAd}
-              </Link>
-              <Link
-                href="/listings"
-                className="rounded-xl border border-sky-200/80 bg-white/75 px-4 py-2 text-sm font-medium text-sky-700 hover:border-sky-300 hover:bg-sky-50/70 transition backdrop-blur"
-              >
-                {t.home.viewAllListings}
-              </Link>
-              <Link
-                href="/location"
-                className="rounded-xl border border-emerald-200/80 bg-white/75 px-4 py-2 text-sm font-medium text-emerald-700 hover:border-emerald-300 hover:bg-emerald-50/70 transition backdrop-blur"
-              >
-                {t.common.rent}
-              </Link>
-            </div>
-          </div>
-
-          <div className="grid gap-4">
-            <div className="rounded-3xl border border-slate-200/70 bg-white/75 p-6 shadow-sm backdrop-blur">
-              <div className="text-sm font-medium text-slate-700">{t.home.categories}</div>
-              <div className="mt-4 grid gap-3 sm:grid-cols-3">
-                {CATEGORY_OPTIONS.map((c) => (
+                <div className="mt-8 flex flex-wrap gap-3">
                   <Link
-                    key={c.slug}
-                    href={`/listings?category=${encodeURIComponent(c.slug)}`}
-                    className="rounded-2xl border border-slate-200/70 bg-white/75 p-4 hover:border-sky-300 hover:bg-sky-50/60 transition"
+                    href="/sell"
+                    className="rounded-xl border border-emerald-200/80 bg-white/75 px-4 py-2 text-sm font-medium text-emerald-700 hover:border-emerald-300 hover:bg-emerald-50/70 transition backdrop-blur"
                   >
-                    <div className="flex items-center gap-2">
-                      <Image
-                        src={
-                          c.slug === "auto"
-                            ? "/icon-voiture-v2.png"
-                            : c.slug === "moto"
-                              ? "/icon-moto-v2.png"
-                              : "/icon-utilitaire-v2.png"
-                        }
-                        alt=""
-                        width={64}
-                        height={64}
-                        className="h-6 w-6 object-contain"
-                      />
-                      <div className="font-semibold">{c.label}</div>
-                    </div>
-                    <div className="mt-1 text-xs text-slate-600">Explorer les annonces</div>
+                    {t.home.postAd}
                   </Link>
-                ))}
-              </div>
-            </div>
-
-            <div className="rounded-3xl border border-slate-200/70 bg-white/75 p-6 shadow-sm backdrop-blur">
-              <div className="text-sm font-medium text-slate-700">Confiance</div>
-              <Link
-                href="/garages"
-                title="Voir tous les garages partenaires vérifiés"
-                className="mt-4 flex items-center justify-center overflow-hidden rounded-xl"
-              >
-                <Image
-                  src="/badge-garage-partenaire-autrust-v3.png"
-                  alt="Garage Partenaire Autrust — Professionnel certifié"
-                  width={400}
-                  height={400}
-                  className="h-40 w-auto max-w-full object-contain"
-                />
-              </Link>
-            </div>
-
-            <div className="rounded-3xl border border-slate-200/70 bg-white/75 p-6 shadow-sm backdrop-blur">
-              <div className="flex items-end justify-between gap-4">
-                <div className="text-sm font-medium text-slate-700">Acheter par carrosserie</div>
-                <Link
-                  href="/listings"
-                  className="text-xs text-sky-700 underline decoration-sky-300"
-                >
-                  Tout voir
-                </Link>
-              </div>
-              <div className="mt-4 grid gap-3 sm:grid-cols-2">
-                {BODY_TYPE_OPTIONS.map((b) => (
                   <Link
-                    key={b.slug}
-                    href={`/listings?bodyType=${encodeURIComponent(b.slug)}`}
-                    className="rounded-2xl border border-slate-200/70 bg-white/75 p-4 hover:border-emerald-300 hover:bg-emerald-50/60 transition"
+                    href="/listings"
+                    className="rounded-xl border border-sky-200/80 bg-white/75 px-4 py-2 text-sm font-medium text-sky-700 hover:border-sky-300 hover:bg-sky-50/70 transition backdrop-blur"
                   >
-                    <div className="font-semibold">{b.label}</div>
-                    <div className="mt-1 text-xs text-slate-600">
-                      Voir les {b.label.toLowerCase()}
-                    </div>
+                    {t.home.viewAllListings}
                   </Link>
-                ))}
+                  <Link
+                    href="/location"
+                    className="rounded-xl border border-emerald-200/80 bg-white/75 px-4 py-2 text-sm font-medium text-emerald-700 hover:border-emerald-300 hover:bg-emerald-50/70 transition backdrop-blur"
+                  >
+                    {t.common.rent}
+                  </Link>
+                </div>
               </div>
 
-              <div className="mt-6 text-xs text-slate-500">
-                {t.home.tipSearch}
+              <div className="grid gap-4">
+                <div className="rounded-3xl border border-slate-200/70 bg-white/75 p-6 shadow-sm backdrop-blur">
+                  <div className="text-sm font-medium text-slate-700">{t.home.trustSection}</div>
+                  <Link
+                    href="/garages"
+                    title={t.home.partnerGarages}
+                    className="mt-4 flex items-center justify-center overflow-hidden rounded-xl"
+                  >
+                    <Image
+                      src="/badge-garage-partenaire-autrust-v3.png"
+                      alt="Garage Partenaire Autrust — Professionnel certifié"
+                      width={400}
+                      height={400}
+                      className="h-40 w-auto max-w-full object-contain"
+                    />
+                  </Link>
+                </div>
+
+                <div className="rounded-3xl border border-slate-200/70 bg-white/75 p-6 shadow-sm backdrop-blur">
+                  <div className="flex items-end justify-between gap-4">
+                    <div className="text-sm font-medium text-slate-700">{t.home.buyByBodyType}</div>
+                    <Link
+                      href="/listings"
+                      className="text-xs text-sky-700 underline decoration-sky-300"
+                    >
+                      {t.common.viewAll}
+                    </Link>
+                  </div>
+                  <div className="mt-4 grid gap-3 sm:grid-cols-2">
+                    {BODY_TYPE_OPTIONS.map((b) => (
+                      <Link
+                        key={b.slug}
+                        href={`/listings?bodyType=${encodeURIComponent(b.slug)}`}
+                        className="rounded-2xl border border-slate-200/70 bg-white/75 p-4 hover:border-emerald-300 hover:bg-emerald-50/60 transition"
+                      >
+                        <div className="font-semibold">{b.label}</div>
+                        <div className="mt-1 text-xs text-slate-600">
+                          {t.common.seeCategory} {b.label.toLowerCase()}
+                        </div>
+                      </Link>
+                    ))}
+                  </div>
+
+                  <div className="mt-6 text-xs text-slate-500">
+                    {t.home.tipSearch}
+                  </div>
+                </div>
               </div>
-            </div>
-          </div>
             </section>
           </div>
 
@@ -307,7 +231,19 @@ export default async function HomePage() {
             </Link>
           </div>
 
-          <div className="mt-6 grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8 gap-4">
+          <div className="mt-6 grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-4">
+            {getPopularAndOtherBrands().popular.map((brand) => (
+              <Link
+                key={brand.slug}
+                href={`/listings?make=${encodeURIComponent(brand.name)}`}
+                className="flex flex-col items-center justify-center rounded-2xl border border-slate-200/70 bg-white/75 p-4 hover:border-sky-300 hover:bg-sky-50/60 transition text-center min-h-[80px]"
+              >
+                <div className="text-sm font-semibold text-slate-900 leading-tight">{brand.name}</div>
+              </Link>
+            ))}
+          </div>
+          <p className="mt-6 text-sm font-medium text-slate-600">{t.home.allBrands}</p>
+          <div className="mt-3 grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8 gap-4">
             {CAR_BRANDS.map((brand) => (
               <Link
                 key={brand.slug}

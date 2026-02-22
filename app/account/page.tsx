@@ -9,6 +9,7 @@ import { ConnectStartClient } from "@/app/account/ConnectStartClient";
 import { UserRatings } from "@/app/_components/UserRatings";
 import { formatPriceEUR } from "@/lib/listings";
 import { ChangePlanClient } from "@/app/account/ChangePlanClient";
+import { PublishDraftButton } from "@/app/account/PublishDraftButton";
 
 export const dynamic = "force-dynamic";
 
@@ -202,11 +203,14 @@ export default async function AccountPage({
           {myListings.length > 0 ? (
             <div className="mt-4 space-y-4">
               {myListings.map((l) => (
-                <Link
+                <div
                   key={l.id}
-                  href={`/listings/${l.id}`}
-                  className="flex flex-wrap items-center gap-4 rounded-2xl border border-slate-200/70 bg-white/75 p-4 shadow-sm hover:border-sky-300 hover:bg-sky-50/50 transition"
+                  className="flex flex-wrap items-center gap-4 rounded-2xl border border-slate-200/70 bg-white/75 p-4 shadow-sm"
                 >
+                  <Link
+                    href={`/listings/${l.id}`}
+                    className="flex min-w-0 flex-1 flex-wrap items-center gap-4 hover:opacity-90"
+                  >
                   <div className="h-16 w-24 shrink-0 overflow-hidden rounded-xl bg-slate-100">
                     {l.photos[0] ? (
                       <Image
@@ -223,20 +227,32 @@ export default async function AccountPage({
                     )}
                   </div>
                   <div className="min-w-0 flex-1">
-                    <div className="font-semibold text-slate-900">{l.title}</div>
+                    <div className="flex items-center gap-2">
+                      <span className="font-semibold text-slate-900">{l.title}</span>
+                      {l.status === "DRAFT" && (
+                        <span className="shrink-0 rounded-full border border-amber-300 bg-amber-50 px-2 py-0.5 text-xs font-medium text-amber-800">
+                          Brouillon
+                        </span>
+                      )}
+                    </div>
                     <div className="mt-0.5 text-sm text-slate-600">
                       {formatPriceEUR(l.price)}
                       {l.mode === "RENT" ? " / jour" : ""} • {l.year} • {l.km.toLocaleString("fr-BE")} km
                     </div>
                     <div className="mt-2 flex flex-wrap gap-3 text-xs text-slate-500">
+                      {l.status === "ACTIVE" && (
+                        <>
+                          <span>
+                            {l._count.contactRequests} contact{l._count.contactRequests !== 1 ? "s" : ""}
+                          </span>
+                          <span>
+                            {l._count.favorites} favori{l._count.favorites !== 1 ? "s" : ""}
+                          </span>
+                        </>
+                      )}
                       <span>
-                        {l._count.contactRequests} contact{l._count.contactRequests !== 1 ? "s" : ""}
-                      </span>
-                      <span>
-                        {l._count.favorites} favori{l._count.favorites !== 1 ? "s" : ""}
-                      </span>
-                      <span>
-                        Publiée le {l.createdAt.toLocaleDateString("fr-BE")}
+                        {l.status === "DRAFT" ? "Enregistrée le " : "Publiée le "}
+                        {l.createdAt.toLocaleDateString("fr-BE")}
                       </span>
                     </div>
                   </div>
@@ -244,6 +260,16 @@ export default async function AccountPage({
                     Voir l’annonce →
                   </span>
                 </Link>
+                {l.status === "DRAFT" && (
+                  <div className="shrink-0">
+                    <PublishDraftButton
+                      listingId={l.id}
+                      canPublish={emailOk && phoneOk}
+                      disabledMessage={!(emailOk && phoneOk) ? "Vérifiez votre email et téléphone (Mon compte) pour publier." : undefined}
+                    />
+                  </div>
+                )}
+              </div>
               ))}
             </div>
           ) : (

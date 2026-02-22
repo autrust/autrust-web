@@ -4,6 +4,7 @@ import { ListingCardWithFavorite } from "@/app/_components/ListingCardWithFavori
 import {
   BODY_TYPE_OPTIONS,
   CATEGORY_OPTIONS,
+  COUNTRY_OPTIONS,
   parseListingFilters,
   type SearchParams,
 } from "@/lib/listings";
@@ -14,6 +15,7 @@ import { getCurrentUser } from "@/lib/auth";
 import { SaveSearchButton } from "./SaveSearchButton";
 import { OptionsSection } from "./OptionsSection";
 import { getBrandNameFromSlug } from "@/lib/carBrands";
+import { MakeModelSearchFields } from "@/app/_components/MakeModelSearchFields";
 import { ModeFilter } from "@/app/_components/ModeFilter";
 import { ActiveFiltersBar } from "@/app/_components/ActiveFiltersBar";
 import { SortButton } from "@/app/_components/SortButton";
@@ -59,7 +61,9 @@ export default async function ListingsPage({
       isSponsored: true,
       sponsoredUntil: { gt: now },
     } : {}),
-    ...(filters.make ? { make: { contains: filters.make } } : {}),
+    ...(filters.make && filters.make !== "other" ? { make: { contains: filters.make } } : {}),
+    ...(filters.model ? { model: { contains: filters.model } } : {}),
+    ...(filters.country ? { country: filters.country } : {}),
     ...(filters.city ? { city: { contains: filters.city } } : {}),
     ...(filters.q
       ? { OR: [{ title: { contains: filters.q } }, { description: { contains: filters.q } }] }
@@ -121,7 +125,7 @@ export default async function ListingsPage({
     };
   }
   if (filters.registered === "yes") {
-    const registrationDateFilter: Prisma.DateTimeFilter = { not: null };
+    const registrationDateFilter: Prisma.DateTimeFilter = { not: null } as unknown as Prisma.DateTimeFilter;
     // Filtrer par année de mise en circulation si spécifiée
     if (filters.minRegistrationYear !== undefined) {
       registrationDateFilter.gte = new Date(`${filters.minRegistrationYear}-01-01`);
@@ -191,7 +195,7 @@ export default async function ListingsPage({
         });
 
   // Filtrer par marque (recherche insensible à la casse côté application pour SQLite)
-  if (filters.make) {
+  if (filters.make && filters.make !== "other") {
     const makeLower = filters.make.toLowerCase();
     optionFilteredItems = optionFilteredItems.filter((l) => {
       if (!l.make) return false;
@@ -233,7 +237,7 @@ export default async function ListingsPage({
   let pageTitle = "Annonces";
   if (seller) {
     pageTitle = `Annonces de ${seller.email.split("@")[0]}`;
-  } else if (filters.make) {
+  } else if (filters.make && filters.make !== "other") {
     pageTitle = `Véhicules ${filters.make}`;
   }
 
@@ -273,8 +277,14 @@ export default async function ListingsPage({
         <form
           action="/listings"
           method="GET"
-          className="mt-6 rounded-3xl border border-slate-200/70 bg-white/75 p-5 shadow-sm backdrop-blur"
+          className="mt-6"
         >
+          {filters.categorySlug && (
+            <input type="hidden" name="category" value={filters.categorySlug} />
+          )}
+          {filters.fuel === "electric" && (
+            <input type="hidden" name="electric" value="1" />
+          )}
           {filters.mode && (
             <input type="hidden" name="mode" value={filters.mode} />
           )}
@@ -296,29 +306,115 @@ export default async function ListingsPage({
           {filters.maxRegistrationYear && (
             <input type="hidden" name="maxRegistrationYear" value={String(filters.maxRegistrationYear)} />
           )}
+          {/* Recherche : marque, modèle, prix max, année min, km max, transmission, pays */}
+          <div className="rounded-2xl border-2 border-slate-200/80 bg-white p-4 shadow-lg shadow-sky-500/10 focus-within:border-sky-400 focus-within:shadow-xl focus-within:shadow-sky-500/15 transition-all duration-200">
+            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+              <MakeModelSearchFields
+                idPrefix="search"
+                defaultMake={filters.make ?? ""}
+                defaultModel={filters.model ?? ""}
+                category={filters.categorySlug ?? ""}
+              />
+              <div>
+                <label htmlFor="search-maxPrice" className="mb-1 block text-xs font-medium text-slate-500">Prix max (€)</label>
+                <input
+                  id="search-maxPrice"
+                  name="maxPrice"
+                  type="number"
+                  min={0}
+                  defaultValue={filters.maxPrice?.toString() ?? ""}
+                  placeholder="—"
+                  className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-sky-300/60 focus:border-sky-300"
+                />
+              </div>
+              <div>
+                <label htmlFor="search-minYear" className="mb-1 block text-xs font-medium text-slate-500">Année min.</label>
+                <input
+                  id="search-minYear"
+                  name="minYear"
+                  type="number"
+                  min={1900}
+                  max={2100}
+                  defaultValue={filters.minYear?.toString() ?? ""}
+                  placeholder="—"
+                  className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-sky-300/60 focus:border-sky-300"
+                />
+              </div>
+              <div>
+                <label htmlFor="search-maxKm" className="mb-1 block text-xs font-medium text-slate-500">Kilométrage max</label>
+                <input
+                  id="search-maxKm"
+                  name="maxKm"
+                  type="number"
+                  min={0}
+                  defaultValue={filters.maxKm?.toString() ?? ""}
+                  placeholder="—"
+                  className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-sky-300/60 focus:border-sky-300"
+                />
+              </div>
+              <div>
+                <label htmlFor="search-gearbox" className="mb-1 block text-xs font-medium text-slate-500">Transmission</label>
+                <select
+                  id="search-gearbox"
+                  name="gearbox"
+                  defaultValue={filters.gearbox ?? ""}
+                  className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-slate-900 focus:outline-none focus:ring-2 focus:ring-sky-300/60 focus:border-sky-300"
+                >
+                  <option value="">Toutes</option>
+                  <option value="manual">Manuelle</option>
+                  <option value="automatic">Automatique</option>
+                  <option value="semi-automatic">Semi-auto</option>
+                </select>
+              </div>
+              <div>
+                <label htmlFor="search-country" className="mb-1 block text-xs font-medium text-slate-500">Pays</label>
+                <select
+                  id="search-country"
+                  name="country"
+                  defaultValue={filters.country ?? ""}
+                  className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-slate-900 focus:outline-none focus:ring-2 focus:ring-sky-300/60 focus:border-sky-300"
+                >
+                  <option value="">Tous</option>
+                  {COUNTRY_OPTIONS.map((c) => (
+                    <option key={c.code} value={c.code}>{c.label}</option>
+                  ))}
+                </select>
+              </div>
+              <div className="flex items-end">
+                <label className="flex cursor-pointer items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-medium text-slate-700 hover:bg-slate-50 focus-within:ring-2 focus-within:ring-sky-300/60">
+                  <input
+                    type="checkbox"
+                    name="electric"
+                    value="1"
+                    defaultChecked={filters.fuel === "electric"}
+                    className="h-4 w-4 accent-amber-500"
+                    aria-label="100% électrique uniquement"
+                  />
+                  <span className="inline-flex items-center gap-1.5">
+                    <svg className="h-4 w-4 text-amber-500" viewBox="0 0 24 24" fill="currentColor" aria-hidden>
+                      <path d="M13 2L3 14h8l-2 8 10-12h-8l2-8z" />
+                    </svg>
+                    100% électrique
+                  </span>
+                </label>
+              </div>
+              <div className="flex items-end">
+                <button
+                  type="submit"
+                  className="w-full rounded-xl bg-sky-600 px-5 py-3 font-semibold text-white hover:bg-sky-500 active:bg-sky-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-sky-400 focus-visible:ring-offset-2"
+                >
+                  Rechercher
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <details className="mt-4 rounded-2xl border border-slate-200/70 bg-white/90 p-4 shadow-sm">
+            <summary className="cursor-pointer list-none font-medium text-slate-700 hover:text-slate-900 select-none flex items-center gap-2">
+              <span className="text-sky-600">+</span> Filtres avancés
+            </summary>
+            <div className="mt-4 pt-4 border-t border-slate-200/70 space-y-4">
           <div className="grid gap-3 md:grid-cols-5">
-            <input
-              name="q"
-              defaultValue={filters.q ?? ""}
-              placeholder="Mot-clé (marque, modèle...)"
-              className="w-full rounded-xl border border-slate-200 bg-white/85 px-4 py-3 text-slate-900 placeholder:text-slate-400 shadow-sm focus:outline-none focus:ring-2 focus:ring-sky-300/60 focus:border-sky-300"
-            />
-
-            <select
-              name="category"
-              defaultValue={
-                filters.categorySlug ?? ""
-              }
-              className="w-full rounded-xl border border-slate-200 bg-white/85 px-4 py-3 text-slate-900 shadow-sm focus:outline-none focus:ring-2 focus:ring-sky-300/60 focus:border-sky-300"
-            >
-              <option value="">Toutes catégories</option>
-              {CATEGORY_OPTIONS.map((c) => (
-                <option key={c.slug} value={c.slug}>
-                  {c.label}
-                </option>
-              ))}
-            </select>
-
             <select
               name="bodyType"
               defaultValue={filters.bodyTypeSlug ?? ""}
@@ -331,35 +427,17 @@ export default async function ListingsPage({
                 </option>
               ))}
             </select>
-
             <input
               name="city"
               defaultValue={filters.city ?? ""}
               placeholder="Ville"
               className="w-full rounded-xl border border-slate-200 bg-white/85 px-4 py-3 text-slate-900 placeholder:text-slate-400 shadow-sm focus:outline-none focus:ring-2 focus:ring-sky-300/60 focus:border-sky-300"
             />
-
-            <button
-              type="submit"
-              className="rounded-xl bg-sky-600 px-5 py-3 font-medium text-white hover:bg-sky-500 transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-300/60"
-            >
-              Filtrer
-            </button>
-          </div>
-
-          <div className="mt-3 grid gap-3 md:grid-cols-6">
             <input
               name="minPrice"
               defaultValue={filters.minPrice?.toString() ?? ""}
               inputMode="numeric"
               placeholder="Prix min"
-              className="w-full rounded-xl border border-slate-200 bg-white/85 px-4 py-3 text-slate-900 placeholder:text-slate-400 shadow-sm focus:outline-none focus:ring-2 focus:ring-sky-300/60 focus:border-sky-300"
-            />
-            <input
-              name="maxPrice"
-              defaultValue={filters.maxPrice?.toString() ?? ""}
-              inputMode="numeric"
-              placeholder="Prix max"
               className="w-full rounded-xl border border-slate-200 bg-white/85 px-4 py-3 text-slate-900 placeholder:text-slate-400 shadow-sm focus:outline-none focus:ring-2 focus:ring-sky-300/60 focus:border-sky-300"
             />
             <input
@@ -376,6 +454,8 @@ export default async function ListingsPage({
               placeholder="Année max"
               className="w-full rounded-xl border border-slate-200 bg-white/85 px-4 py-3 text-slate-900 placeholder:text-slate-400 shadow-sm focus:outline-none focus:ring-2 focus:ring-sky-300/60 focus:border-sky-300"
             />
+          </div>
+          <div className="grid gap-3 md:grid-cols-6">
             <input
               name="maxKm"
               defaultValue={filters.maxKm?.toString() ?? ""}
@@ -412,17 +492,6 @@ export default async function ListingsPage({
               <option value="cng">CNG</option>
               <option value="ethanol">Ethanol</option>
               <option value="other">Autres</option>
-            </select>
-
-            <select
-              name="gearbox"
-              defaultValue={filters.gearbox ?? ""}
-              className="w-full rounded-xl border border-slate-200 bg-white/85 px-4 py-3 text-slate-900 shadow-sm focus:outline-none focus:ring-2 focus:ring-sky-300/60 focus:border-sky-300"
-            >
-              <option value="">Boîte (toutes)</option>
-              <option value="manual">Manuelle</option>
-              <option value="automatic">Automatique</option>
-              <option value="semi-automatic">Semi-auto</option>
             </select>
 
             <input
@@ -496,6 +565,8 @@ export default async function ListingsPage({
               Réinitialiser
             </Link>
           </div>
+            </div>
+          </details>
         </form>
 
         <div className="mt-6 flex justify-end">

@@ -4,7 +4,7 @@ export const metadata = {
   title: "Créer un compte",
 };
 
-export default function RegisterPage({
+export default async function RegisterPage({
   searchParams,
 }: {
   searchParams: Promise<{ redirect?: string; next?: string }>;

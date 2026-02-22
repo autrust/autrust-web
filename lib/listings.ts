@@ -4,6 +4,16 @@ export const CATEGORY_OPTIONS = [
   { slug: "utilitaire", label: "Utilitaire", value: "Utilitaire" as const },
 ] as const;
 
+/** Pays pour le filtre recherche (code ISO) */
+export const COUNTRY_OPTIONS = [
+  { code: "BE", label: "Belgique" },
+  { code: "FR", label: "France" },
+  { code: "NL", label: "Pays-Bas" },
+  { code: "LU", label: "Luxembourg" },
+  { code: "DE", label: "Allemagne" },
+  { code: "CH", label: "Suisse" },
+] as const;
+
 export const BODY_TYPE_OPTIONS = [
   { slug: "citadine", label: "Citadine" },
   { slug: "suv", label: "SUV" },
@@ -30,6 +40,9 @@ export type Listing = {
   city: string;
   description: string;
   images?: string[];
+  make?: string | null;
+  model?: string | null;
+  displacementL?: string | null;
 };
 
 export type ListingCardModel = {
@@ -43,6 +56,9 @@ export type ListingCardModel = {
   city: string;
   isSponsored?: boolean;
   photoUrl?: string; // URL de la première photo
+  make?: string | null;
+  model?: string | null;
+  displacementL?: string | null;
 };
 
 export function toListingCardModel(listing: Listing): ListingCardModel {
@@ -56,6 +72,9 @@ export function toListingCardModel(listing: Listing): ListingCardModel {
     km: listing.km,
     city: listing.city,
     isSponsored: false,
+    make: listing.make ?? undefined,
+    model: listing.model ?? undefined,
+    displacementL: listing.displacementL ?? undefined,
   };
 }
 
@@ -159,6 +178,8 @@ export type ListingFilters = {
   sellerId?: string;
   sponsored?: boolean;
   make?: string;
+  model?: string;
+  country?: string;
   mode?: "SALE" | "RENT" | "ALL";
   sort?: string;
   page?: number;
@@ -194,7 +215,9 @@ export function parseListingFilters(searchParams: SearchParams): ListingFilters 
     .map((s) => s.trim())
     .filter(Boolean);
 
-  const fuel = firstString(searchParams.fuel)?.trim();
+  const electricOnly = firstString(searchParams.electric);
+  const fuelFromSelect = firstString(searchParams.fuel)?.trim();
+  const fuel = electricOnly ? "electric" : (fuelFromSelect ? fuelFromSelect : undefined);
   const gearbox = firstString(searchParams.gearbox)?.trim();
   const doors = toInt(firstString(searchParams.doors));
   const seats = toInt(firstString(searchParams.seats));
@@ -210,6 +233,8 @@ export function parseListingFilters(searchParams: SearchParams): ListingFilters 
   const sellerId = firstString(searchParams.sellerId)?.trim();
   const sponsored = toBool(firstString(searchParams.sponsored));
   const make = firstString(searchParams.make)?.trim();
+  const model = firstString(searchParams.model)?.trim();
+  const country = firstString(searchParams.country)?.trim();
   const modeRaw = firstString(searchParams.mode)?.trim().toUpperCase();
   const mode = modeRaw === "SALE" || modeRaw === "RENT" || modeRaw === "ALL" ? modeRaw : undefined;
   const sort = firstString(searchParams.sort)?.trim() || undefined;
@@ -252,6 +277,8 @@ export function parseListingFilters(searchParams: SearchParams): ListingFilters 
     sellerId: sellerId ? sellerId : undefined,
     sponsored: sponsored !== undefined ? sponsored : undefined,
     make: make ? make : undefined,
+    model: model ? model : undefined,
+    country: country ? country : undefined,
     mode,
     sort,
     page,

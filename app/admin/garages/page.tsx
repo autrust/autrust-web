@@ -73,12 +73,12 @@ export default async function AdminGaragesPage() {
 
   const soldAmountMap: Record<string, number> = {};
   soldAmountBySeller.forEach((row) => {
-    soldAmountMap[row.sellerId] = row._sum?.price ?? 0;
+    if (row.sellerId != null) soldAmountMap[row.sellerId] = row._sum?.price ?? 0;
   });
 
   const carVerticalMap: Record<string, number> = {};
   carVerticalBySeller.forEach((row) => {
-    carVerticalMap[row.sellerId] = row._count.id;
+    if (row.sellerId != null) carVerticalMap[row.sellerId] = row._count.id;
   });
 
   return (

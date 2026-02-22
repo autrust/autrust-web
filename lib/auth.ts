@@ -143,7 +143,7 @@ export function isAdmin(user: AuthUser | null): boolean {
     user.phone &&
     adminPhones.length > 0 &&
     adminPhones.includes(normalizePhoneForAdmin(user.phone));
-  return phoneOk;
+  return Boolean(phoneOk);
 }
 
 export function constantTimeEquals(a: string, b: string) {
