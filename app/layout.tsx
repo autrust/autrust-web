@@ -3,6 +3,9 @@ import { cookies } from "next/headers";
 import "./globals.css";
 import { SiteHeader } from "./_components/SiteHeader";
 import { SiteFooter } from "./_components/SiteFooter";
+import { IntroHeader } from "./_components/IntroHeader";
+import { TrustBar } from "./_components/TrustBar";
+import { LayoutSwitcher } from "./_components/LayoutSwitcher";
 import { FloatingHelpBubbles } from "./_components/FloatingHelpBubbles";
 import { getSiteUrl } from "@/lib/siteUrl";
 import { getLocaleFromCookie, LOCALE_COOKIE } from "@/lib/locale";
@@ -71,9 +74,14 @@ export default async function RootLayout({
           backgroundAttachment: "fixed",
         }}
       >
-        <SiteHeader locale={locale} />
-        {children}
-        <SiteFooter locale={locale} />
+        <LayoutSwitcher
+          introTop={<IntroHeader locale={locale} />}
+          introBottom={<TrustBar locale={locale} />}
+          defaultTop={<SiteHeader locale={locale} />}
+          defaultBottom={<SiteFooter locale={locale} />}
+        >
+          {children}
+        </LayoutSwitcher>
         <FloatingHelpBubbles />
       </body>
     </html>
